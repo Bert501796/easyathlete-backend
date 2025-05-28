@@ -9,10 +9,13 @@ cloudinary.config({
 
 const storage = new CloudinaryStorage({
   cloudinary,
-  params: {
-    folder: 'fit-files', // 👈 your Cloudinary folder name
-    resource_type: 'raw', // important for .fit files
-    format: 'fit', // optional: preserve extension
+  params: async (req, file) => {
+    const userId = req.body?.userId || 'anon'; // fallback just in case
+    return {
+      folder: `fit-files/${userId}`,
+      resource_type: 'raw',
+      format: 'fit'
+    };
   }
 });
 
