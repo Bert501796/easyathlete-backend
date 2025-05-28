@@ -4,21 +4,26 @@ const { storage } = require('../utils/cloudinary'); // Use cloud-based storage
 
 const router = express.Router();
 
-// Multer now stores files directly in Cloudinary
+// Multer now stores multiple files directly in Cloudinary
 const upload = multer({ storage });
 
-router.post('/upload-fit', upload.single('fitFile'), (req, res) => {
-  if (!req.file) {
-    return res.status(400).json({ error: 'No file uploaded' });
+router.post('/upload-fit', upload.array('fitFiles', 10), (req, res) => {
+  if (!req.files || req.files.length === 0) {
+    return res.status(400).json({ error: 'No files uploaded' });
   }
 
-  console.log('✅ Uploaded .fit file to Cloudinary:', req.file.path);
+  const uploadedFiles = req.files.map(file => ({
+    originalName: file.originalname,
+    url: file.path,
+    publicId: file.filename,
+    size: file.size
+  }));
+
+  console.log('✅ Uploaded multiple .fit files to Cloudinary:', uploadedFiles);
 
   res.status(200).json({
-    message: 'File uploaded successfully to Cloudinary',
-    fileUrl: req.file.path,
-    publicId: req.file.filename,
-    raw: req.file
+    message: 'Files uploaded successfully to Cloudinary',
+    files: uploadedFiles
   });
 });
 
