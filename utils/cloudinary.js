@@ -10,9 +10,12 @@ cloudinary.config({
 const storage = new CloudinaryStorage({
   cloudinary,
   params: async (req, file) => {
-    const userId = req.body?.userId || 'anon'; // fallback just in case
+    const userId = req.body?.userId || 'anon';
+
+    // Detect file type or origin based on request path, headers, or filename
+    // For now, assume this config is for .fit file uploads only
     return {
-      folder: `fit-files/${userId}`,
+      folder: `fit-files/${userId}/fit-files`,
       resource_type: 'raw',
       format: 'fit'
     };
