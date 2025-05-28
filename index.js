@@ -1,12 +1,14 @@
 const express = require('express');
 const cors = require('cors');
 require('dotenv').config();
+const uploadFitRoute = require('./routes/upload-fit'); // ✅ Import the route
 
 const app = express();
 const PORT = process.env.PORT || 4000;
 
 app.use(cors());
 app.use(express.json());
+app.use(uploadFitRoute); // ✅ Enable the .fit file upload route
 
 app.get('/', (req, res) => {
   res.send('EasyAthlete API is running ✅');

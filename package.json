@@ -3,9 +3,10 @@
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
-  "start": "node index.js",
-  "build": "echo 'no build needed'"
-},
+    "start": "node index.js",
+    "build": "echo 'no build needed'",
+    "dev": "node index.js"
+  },
   "keywords": [],
   "author": "",
   "license": "ISC",
@@ -15,6 +16,7 @@
     "cors": "^2.8.5",
     "dotenv": "^16.5.0",
     "express": "^5.1.0",
+    "multer": "^2.0.0",
     "node-fetch": "^3.3.2"
   }
 }
