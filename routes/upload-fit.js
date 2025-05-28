@@ -1,24 +1,10 @@
 const express = require('express');
 const multer = require('multer');
-const path = require('path');
-const fs = require('fs');
+const { storage } = require('../utils/cloudinary'); // Use cloud-based storage
 
 const router = express.Router();
 
-// Ensure the uploads directory exists
-const uploadDir = path.join(__dirname, '..', 'uploads');
-if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir);
-
-// Multer setup to store files locally
-const storage = multer.diskStorage({
-  destination: function (req, file, cb) {
-    cb(null, uploadDir);
-  },
-  filename: function (req, file, cb) {
-    cb(null, `${Date.now()}-${file.originalname}`);
-  }
-});
-
+// Multer now stores files directly in Cloudinary
 const upload = multer({ storage });
 
 router.post('/upload-fit', upload.single('fitFile'), (req, res) => {
@@ -26,9 +12,14 @@ router.post('/upload-fit', upload.single('fitFile'), (req, res) => {
     return res.status(400).json({ error: 'No file uploaded' });
   }
 
-  console.log('Received .fit file:', req.file.path);
+  console.log('✅ Uploaded .fit file to Cloudinary:', req.file.path);
 
-  res.status(200).json({ message: 'File uploaded successfully', filename: req.file.filename });
+  res.status(200).json({
+    message: 'File uploaded successfully to Cloudinary',
+    fileUrl: req.file.path,
+    publicId: req.file.filename,
+    raw: req.file
+  });
 });
 
 module.exports = router;
