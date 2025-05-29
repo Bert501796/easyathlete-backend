@@ -15,17 +15,18 @@ router.post('/upload-onboarding', async (req, res) => {
 
     const tmpDir = path.join(__dirname, '../tmp');
     if (!fs.existsSync(tmpDir)) {
-      fs.mkdirSync(tmpDir); // ✅ ensure tmp dir exists
+      fs.mkdirSync(tmpDir);
     }
 
     const tempPath = path.join(tmpDir, `${userId}-onboarding.json`);
     fs.writeFileSync(tempPath, JSON.stringify(onboardingData));
 
+    // Upload onboarding.json to fit-files/${userId}
     const result = await cloudinary.uploader.upload(tempPath, {
       folder: `fit-files/${userId}`,
       resource_type: 'raw',
       public_id: 'onboarding',
-      overwrite: true,
+      overwrite: true
     });
 
     fs.unlinkSync(tempPath);

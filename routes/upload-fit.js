@@ -14,14 +14,13 @@ router.post('/upload-fit', upload.array('fitFiles', 10), async (req, res) => {
   }
 
   const userId = req.query.userId || 'anon';
-
   const parsedSummaries = [];
 
   for (const file of req.files) {
     try {
-      const localTmpPath = file.path; // this is where the file was saved
+      const localTmpPath = file.path;
       const summary = await parseFitFile(localTmpPath);
-      parsedSummaries.push(...summary); // flatten all session results
+      parsedSummaries.push(...summary);
     } catch (err) {
       console.error(`❌ Error parsing ${file.originalname}:`, err.message);
     }
@@ -33,7 +32,7 @@ router.post('/upload-fit', upload.array('fitFiles', 10), async (req, res) => {
   const summaryPath = path.join(tmpDir, `${userId}-activity-summary.json`);
   fs.writeFileSync(summaryPath, JSON.stringify(parsedSummaries, null, 2));
 
-  // Upload JSON to Cloudinary
+  // Upload summary JSON to Cloudinary parent folder (not /fit-files)
   const result = await cloudinary.uploader.upload(summaryPath, {
     folder: `fit-files/${userId}`,
     resource_type: 'raw',
@@ -41,7 +40,7 @@ router.post('/upload-fit', upload.array('fitFiles', 10), async (req, res) => {
     overwrite: true
   });
 
-  fs.unlinkSync(summaryPath); // cleanup
+  fs.unlinkSync(summaryPath);
 
   console.log('📦 Uploaded activity summary to Cloudinary:', result.secure_url);
 

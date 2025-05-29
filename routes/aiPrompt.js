@@ -28,7 +28,8 @@ const downloadJson = async (url) => {
 router.get('/ai-prompt/:userId', async (req, res) => {
   try {
     const { userId } = req.params;
-    const folderPath = `fit-files/${userId}/fit-files`;
+    const folderPath = `fit-files/${userId}`; // ✅ Looks in main user folder where summary files live
+
 
     console.log(`📂 Searching Cloudinary folder: ${folderPath}`);
     const files = await fetchCloudinaryRawFile(folderPath);
