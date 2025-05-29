@@ -9,7 +9,7 @@ const openai = new OpenAI({
 
 const fetchCloudinaryRawFile = async (path) => {
   const resources = await cloudinary.search
-    .expression(`folder="${path}" AND resource_type="raw"`)
+.expression(`prefix="${path}/" AND resource_type="raw"`)
     .sort_by('public_id', 'desc')
     .max_results(10)
     .execute();
@@ -30,8 +30,8 @@ router.get('/ai-prompt/:userId', async (req, res) => {
     // Fetch onboarding and activity-summary
     const files = await fetchCloudinaryRawFile(folderPath);
 
-   const onboardingFile = files.find(f => f.public_id.endsWith('/onboarding'));
-const summaryFile = files.find(f => f.public_id.endsWith('/activity-summary'));
+   const onboardingFile = files.find(f => f.public_id.includes('/onboarding'));
+const summaryFile = files.find(f => f.public_id.includes('/activity-summary'));
 
 
     if (!onboardingFile || !summaryFile) {
