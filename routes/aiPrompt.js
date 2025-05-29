@@ -28,8 +28,7 @@ const downloadJson = async (url) => {
 router.get('/ai-prompt/:userId', async (req, res) => {
   try {
     const { userId } = req.params;
-    const folderPath = `fit-files/${userId}`; // ✅ Looks in main user folder where summary files live
-
+    const folderPath = `fit-files/${userId}`;
 
     console.log(`📂 Searching Cloudinary folder: ${folderPath}`);
     const files = await fetchCloudinaryRawFile(folderPath);
@@ -59,20 +58,40 @@ router.get('/ai-prompt/:userId', async (req, res) => {
     const prompt = `
 You are an expert endurance coach.
 
-Here is the user's onboarding profile:
+Your task is to generate a 4-week personalized training plan for the athlete described below.
+
+🏁 Athlete Profile:
 - Goal: ${onboardingData.goal}
 - Deadline: ${onboardingData.deadline}
 - Fitness Level: ${onboardingData.level}
-- Days per Week: ${onboardingData.daysPerWeek}
-- Sports: ${sportsList}
+- Available Days per Week: ${onboardingData.daysPerWeek}
+- Preferred Sports: ${sportsList}
 - Restrictions: ${onboardingData.restrictions}
 
-Here are their recent activities:
+📊 Recent Training Summary:
 ${activitySummary.map((s, i) => {
-  return `${i + 1}. ${s.sport} - ${s.distanceKm?.toFixed(1) || 'n/a'}km - ${s.totalTimeMinutes?.toFixed(0)}min - HR avg: ${s.avgHeartRate || 'n/a'}`;
+  return `${i + 1}. ${s.sport} – ${s.distanceKm?.toFixed(1) || 'n/a'} km – ${s.totalTimeMinutes?.toFixed(0)} min – HR avg: ${s.avgHeartRate || 'n/a'}`;
 }).join('\n')}
 
-Please generate a personalized 7-day training schedule, with activity types, intensity zones, durations, and clear rest days.
+📋 Instructions:
+- Create a 4-week training schedule that includes activities for each training day.
+- Prioritize the athlete’s preferred sports in the training blocks.
+- Each workout should include:
+  - Sport
+  - Duration or Distance
+  - Target Intensity or HR zone
+  - Detailed instructions (e.g., "Run 10 minutes warm-up, then 4x5 min at tempo pace with 2 min rest, cool down")
+- Add rest days based on training frequency and fitness level.
+- Ensure progressive overload: Week 1 should be lighter, and training should build up in Weeks 2–3, with Week 4 as a recovery or deload week.
+- Output format should be organized week-by-week using headers:
+  - Week 1
+    - Day 1: ...
+    - Day 2: ...
+  - Week 2: ...
+  - etc.
+
+🎯 Goal:
+Help the athlete train consistently, avoid overtraining, and move closer to their goal.
     `.trim();
 
     console.log('📤 Prompt sent to OpenAI:\n', prompt);
@@ -94,7 +113,7 @@ Please generate a personalized 7-day training schedule, with activity types, int
     res.status(200).json({ schedule: output });
 
   } catch (error) {
-console.error('❌ AI prompt FULL error:', error);
+    console.error('❌ AI prompt FULL error:', error);
     console.error(error.stack);
     res.status(500).json({ error: 'Failed to generate training plan' });
   }
