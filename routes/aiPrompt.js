@@ -9,7 +9,7 @@ const openai = new OpenAI({
 
 const fetchCloudinaryRawFile = async (path) => {
   const resources = await cloudinary.search
-    .expression(`prefix="${path}/" AND resource_type="raw"`)
+    .expression(`folder="${path}" AND resource_type="raw"`)
     .sort_by('public_id', 'desc')
     .max_results(10)
     .execute();
