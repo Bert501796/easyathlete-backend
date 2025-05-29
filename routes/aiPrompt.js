@@ -93,7 +93,7 @@ Please generate a personalized 7-day training schedule, with activity types, int
     res.status(200).json({ schedule: output });
 
   } catch (error) {
-    console.error('❌ AI prompt error:', error.message);
+console.error('❌ AI prompt FULL error:', error);
     console.error(error.stack);
     res.status(500).json({ error: 'Failed to generate training plan' });
   }
