@@ -1,29 +1,54 @@
 const express = require('express');
 const multer = require('multer');
-const { storage } = require('../utils/cloudinary'); // Use cloud-based storage
+const fs = require('fs');
+const path = require('path');
+const { storage, cloudinary } = require('../utils/cloudinary');
+const { parseFitFile } = require('../utils/parseFit');
 
 const router = express.Router();
-
-// Multer now stores multiple files directly in Cloudinary
 const upload = multer({ storage });
 
-router.post('/upload-fit', upload.array('fitFiles', 10), (req, res) => {
+router.post('/upload-fit', upload.array('fitFiles', 10), async (req, res) => {
   if (!req.files || req.files.length === 0) {
     return res.status(400).json({ error: 'No files uploaded' });
   }
 
-  const uploadedFiles = req.files.map(file => ({
-    originalName: file.originalname,
-    url: file.path,
-    publicId: file.filename,
-    size: file.size
-  }));
+  const userId = req.query.userId || 'anon';
 
-console.log('📦 Uploading .fit files for userId:', req.query.userId);
+  const parsedSummaries = [];
+
+  for (const file of req.files) {
+    try {
+      const localTmpPath = file.path; // this is where the file was saved
+      const summary = await parseFitFile(localTmpPath);
+      parsedSummaries.push(...summary); // flatten all session results
+    } catch (err) {
+      console.error(`❌ Error parsing ${file.originalname}:`, err.message);
+    }
+  }
+
+  // Save summary JSON to temp file
+  const tmpDir = path.join(__dirname, '../tmp');
+  if (!fs.existsSync(tmpDir)) fs.mkdirSync(tmpDir);
+  const summaryPath = path.join(tmpDir, `${userId}-activity-summary.json`);
+  fs.writeFileSync(summaryPath, JSON.stringify(parsedSummaries, null, 2));
+
+  // Upload JSON to Cloudinary
+  const result = await cloudinary.uploader.upload(summaryPath, {
+    folder: `fit-files/${userId}`,
+    resource_type: 'raw',
+    public_id: 'activity-summary',
+    overwrite: true
+  });
+
+  fs.unlinkSync(summaryPath); // cleanup
+
+  console.log('📦 Uploaded activity summary to Cloudinary:', result.secure_url);
 
   res.status(200).json({
-    message: 'Files uploaded successfully to Cloudinary',
-    files: uploadedFiles
+    message: 'Files uploaded and activity summary created',
+    summaryUrl: result.secure_url,
+    summary: parsedSummaries
   });
 });
 
