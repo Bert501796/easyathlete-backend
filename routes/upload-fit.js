@@ -12,7 +12,6 @@ const { parseFitFile } = require('../utils/parseFit');
 const router = express.Router();
 const upload = multer({ storage });
 
-// Ensures full directory path exists before saving file
 const ensureDirectory = (dirPath) => {
   if (!fs.existsSync(dirPath)) {
     fs.mkdirSync(dirPath, { recursive: true });
@@ -24,7 +23,7 @@ const downloadFileToTemp = async (userId, filename, url) => {
   if (!response.ok) throw new Error(`Failed to download ${url}`);
   const buffer = await response.arrayBuffer();
 
-  const tmpFolder = path.join(__dirname, `../tmp/fit-files/${userId}/fit-files`);
+  const tmpFolder = path.join(__dirname, `../tmp/fit-files/${userId}`);
   ensureDirectory(tmpFolder);
 
   const filePath = path.join(tmpFolder, filename);
@@ -42,16 +41,16 @@ router.post('/upload-fit', upload.array('fitFiles', 10), async (req, res) => {
 
   for (const file of req.files) {
     try {
-      const publicId = file.filename.replace(/\.[^/.]+$/, '');
+      const filename = path.basename(file.filename); // ✅ safe, clean filename
       const cloudinaryUrl = file.path;
 
-      const localPath = await downloadFileToTemp(userId, `${publicId}.fit`, cloudinaryUrl);
+      const localPath = await downloadFileToTemp(userId, filename, cloudinaryUrl);
       console.log(`📥 Downloaded to ${localPath}, parsing...`);
 
       const summary = await parseFitFile(localPath);
       parsedSummaries.push(...summary);
 
-      fs.unlinkSync(localPath);
+      fs.unlinkSync(localPath); // cleanup
     } catch (err) {
       console.error(`❌ Error parsing ${file.originalname}:`, err.message);
     }
