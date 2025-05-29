@@ -25,14 +25,12 @@ const downloadJson = async (url) => {
 router.get('/ai-prompt/:userId', async (req, res) => {
   try {
     const { userId } = req.params;
-    const folderPath = `fit-files/${userId}`;
+    const folderPath = `fit-files/${userId}/fit-files`;
 
-    // Fetch onboarding and activity-summary
     const files = await fetchCloudinaryRawFile(folderPath);
 
-   const onboardingFile = files.find(f => f.public_id.includes('/onboarding'));
-const summaryFile = files.find(f => f.public_id.includes('/activity-summary'));
-
+    const onboardingFile = files.find(f => f.public_id.includes('/onboarding'));
+    const summaryFile = files.find(f => f.public_id.includes('/activity-summary'));
 
     if (!onboardingFile || !summaryFile) {
       return res.status(400).json({ error: 'Missing onboarding or activity summary' });
@@ -41,7 +39,10 @@ const summaryFile = files.find(f => f.public_id.includes('/activity-summary'));
     const onboardingData = await downloadJson(onboardingFile.secure_url);
     const activitySummary = await downloadJson(summaryFile.secure_url);
 
-    // ✨ Construct AI prompt
+    const sportsList = Array.isArray(onboardingData.sports)
+      ? onboardingData.sports.join(', ')
+      : onboardingData.sports;
+
     const prompt = `
 You are an expert endurance coach.
 
@@ -50,7 +51,7 @@ Here is the user's onboarding profile:
 - Deadline: ${onboardingData.deadline}
 - Fitness Level: ${onboardingData.level}
 - Days per Week: ${onboardingData.daysPerWeek}
-- Sports: ${onboardingData.sports.join(', ')}
+- Sports: ${sportsList}
 - Restrictions: ${onboardingData.restrictions}
 
 Here are their recent activities:
@@ -59,7 +60,7 @@ ${activitySummary.map((s, i) => {
 }).join('\n')}
 
 Please generate a personalized 7-day training schedule, with activity types, intensity zones, durations, and clear rest days.
-`;
+    `.trim();
 
     const completion = await openai.chat.completions.create({
       model: 'gpt-4',
@@ -67,13 +68,19 @@ Please generate a personalized 7-day training schedule, with activity types, int
       temperature: 0.7
     });
 
-    const output = completion.choices[0]?.message?.content;
+    const output = completion.choices?.[0]?.message?.content;
+
+    if (!output) {
+      return res.status(500).json({ error: 'AI response was empty' });
+    }
 
     res.status(200).json({ schedule: output });
+
   } catch (error) {
     console.error('❌ AI prompt error:', error);
     res.status(500).json({ error: 'Failed to generate training plan' });
   }
 });
+
 
 module.exports = router;
