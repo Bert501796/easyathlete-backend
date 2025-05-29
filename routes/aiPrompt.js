@@ -30,8 +30,9 @@ router.get('/ai-prompt/:userId', async (req, res) => {
     // Fetch onboarding and activity-summary
     const files = await fetchCloudinaryRawFile(folderPath);
 
-    const onboardingFile = files.find(f => f.public_id.endsWith('onboarding'));
-    const summaryFile = files.find(f => f.public_id.endsWith('activity-summary'));
+   const onboardingFile = files.find(f => f.public_id.endsWith('/onboarding'));
+const summaryFile = files.find(f => f.public_id.endsWith('/activity-summary'));
+
 
     if (!onboardingFile || !summaryFile) {
       return res.status(400).json({ error: 'Missing onboarding or activity summary' });
