@@ -12,15 +12,22 @@ const { parseFitFile } = require('../utils/parseFit');
 const router = express.Router();
 const upload = multer({ storage });
 
-const downloadFileToTemp = async (url, filename) => {
+// Ensures full directory path exists before saving file
+const ensureDirectory = (dirPath) => {
+  if (!fs.existsSync(dirPath)) {
+    fs.mkdirSync(dirPath, { recursive: true });
+  }
+};
+
+const downloadFileToTemp = async (userId, filename, url) => {
   const response = await fetch(url);
-  if (!response.ok) throw new Error(`❌ Failed to download ${url}`);
+  if (!response.ok) throw new Error(`Failed to download ${url}`);
   const buffer = await response.arrayBuffer();
 
-  const tmpDir = path.join(__dirname, '../tmp');
-  if (!fs.existsSync(tmpDir)) fs.mkdirSync(tmpDir);
+  const tmpFolder = path.join(__dirname, `../tmp/fit-files/${userId}/fit-files`);
+  ensureDirectory(tmpFolder);
 
-  const filePath = path.join(tmpDir, filename);
+  const filePath = path.join(tmpFolder, filename);
   fs.writeFileSync(filePath, Buffer.from(buffer));
   return filePath;
 };
@@ -38,13 +45,12 @@ router.post('/upload-fit', upload.array('fitFiles', 10), async (req, res) => {
       const publicId = file.filename.replace(/\.[^/.]+$/, '');
       const cloudinaryUrl = file.path;
 
-      const localPath = await downloadFileToTemp(cloudinaryUrl, `${publicId}.fit`);
-      console.log(`📥 Downloaded to ${localPath}, parsing now...`);
+      const localPath = await downloadFileToTemp(userId, `${publicId}.fit`, cloudinaryUrl);
+      console.log(`📥 Downloaded to ${localPath}, parsing...`);
 
       const summary = await parseFitFile(localPath);
-      console.log(`✅ Parsed ${summary.length} session(s) from ${file.originalname}`);
-
       parsedSummaries.push(...summary);
+
       fs.unlinkSync(localPath);
     } catch (err) {
       console.error(`❌ Error parsing ${file.originalname}:`, err.message);
@@ -52,7 +58,7 @@ router.post('/upload-fit', upload.array('fitFiles', 10), async (req, res) => {
   }
 
   const tmpDir = path.join(__dirname, '../tmp');
-  if (!fs.existsSync(tmpDir)) fs.mkdirSync(tmpDir);
+  ensureDirectory(tmpDir);
   const summaryPath = path.join(tmpDir, `${userId}-activity-summary.json`);
   fs.writeFileSync(summaryPath, JSON.stringify(parsedSummaries, null, 2));
 
