@@ -14,7 +14,7 @@ const upload = multer({ storage });
 
 const downloadFileToTemp = async (url, filename) => {
   const response = await fetch(url);
-  if (!response.ok) throw new Error(`Failed to download ${url}`);
+  if (!response.ok) throw new Error(`❌ Failed to download ${url}`);
   const buffer = await response.arrayBuffer();
 
   const tmpDir = path.join(__dirname, '../tmp');
@@ -35,26 +35,27 @@ router.post('/upload-fit', upload.array('fitFiles', 10), async (req, res) => {
 
   for (const file of req.files) {
     try {
-      const publicId = file.filename.replace(/\.[^/.]+$/, ''); // remove extension
+      const publicId = file.filename.replace(/\.[^/.]+$/, '');
       const cloudinaryUrl = file.path;
 
       const localPath = await downloadFileToTemp(cloudinaryUrl, `${publicId}.fit`);
+      console.log(`📥 Downloaded to ${localPath}, parsing now...`);
+
       const summary = await parseFitFile(localPath);
+      console.log(`✅ Parsed ${summary.length} session(s) from ${file.originalname}`);
 
       parsedSummaries.push(...summary);
-      fs.unlinkSync(localPath); // ✅ Corrected cleanup variable name
+      fs.unlinkSync(localPath);
     } catch (err) {
       console.error(`❌ Error parsing ${file.originalname}:`, err.message);
     }
   }
 
-  // Save summary JSON to temp file
   const tmpDir = path.join(__dirname, '../tmp');
   if (!fs.existsSync(tmpDir)) fs.mkdirSync(tmpDir);
   const summaryPath = path.join(tmpDir, `${userId}-activity-summary.json`);
   fs.writeFileSync(summaryPath, JSON.stringify(parsedSummaries, null, 2));
 
-  // Upload summary JSON to Cloudinary
   const result = await cloudinary.uploader.upload(summaryPath, {
     folder: `fit-files/${userId}`,
     resource_type: 'raw',
@@ -62,7 +63,7 @@ router.post('/upload-fit', upload.array('fitFiles', 10), async (req, res) => {
     overwrite: true
   });
 
-  fs.unlinkSync(summaryPath); // final cleanup
+  fs.unlinkSync(summaryPath);
 
   console.log('📦 Uploaded activity summary to Cloudinary:', result.secure_url);
 
