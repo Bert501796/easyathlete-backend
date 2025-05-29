@@ -19,7 +19,7 @@ router.post('/upload-fit', upload.array('fitFiles', 10), (req, res) => {
     size: file.size
   }));
 
-  console.log('✅ Uploaded multiple .fit files to Cloudinary:', uploadedFiles);
+console.log('📦 Uploading .fit files for userId:', req.query.userId);
 
   res.status(200).json({
     message: 'Files uploaded successfully to Cloudinary',
