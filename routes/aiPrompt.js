@@ -71,18 +71,22 @@ ${activitySummary.map((s, i) => {
   return `${i + 1}. ${s.sport} - ${s.distanceKm?.toFixed(1) || 'n/a'}km - ${s.totalTimeMinutes?.toFixed(0)}min - HR avg: ${s.avgHeartRate || 'n/a'}`;
 }).join('\n')}
 
-Now, generate a 4-week personalized training schedule as an **array of JSON objects**, each including:
-
-- week (1-4)
-- day (1-7)
-- date (ISO format, start from today)
+Please generate a 4-week personalized training schedule as an array of JSON objects, each including:
+- week (1–4)
+- day (1–7)
+- date (ISO format starting today)
 - sport
 - durationMinutes
-- intensityZone
-- instructions
+- intensityZone (1–5)
+- focus (e.g. Endurance, Threshold, VO2max, Recovery)
+- notes (human-readable breakdown of the workout)
+- segments: an array of segments with:
+  - label (e.g. "Warm-up", "Steady Run", "Interval", "Cool Down")
+  - duration (in minutes)
+  - zone (1–5)
 
-Return ONLY the JSON. Do not add extra commentary.
-`.trim();
+Return ONLY a valid JSON array with no explanation or formatting.
+    `.trim();
 
     console.log('📤 Prompt sent to OpenAI:\n', prompt);
 
@@ -94,26 +98,24 @@ Return ONLY the JSON. Do not add extra commentary.
 
     const output = completion.choices?.[0]?.message?.content;
 
-if (!output) {
-  console.warn('⚠️ OpenAI returned no output');
-  return res.status(500).json({ error: 'AI response was empty' });
-}
+    if (!output) {
+      console.warn('⚠️ OpenAI returned no output');
+      return res.status(500).json({ error: 'AI response was empty' });
+    }
 
-let parsed;
-try {
-  parsed = JSON.parse(output);
-} catch (err) {
-  console.error('❌ Failed to parse JSON from AI:', err.message);
-  return res.status(500).json({ error: 'AI response was not valid JSON.' });
-}
+    let parsed;
+    try {
+      parsed = JSON.parse(output);
+    } catch (err) {
+      console.error('❌ Failed to parse JSON from AI:', err.message);
+      return res.status(500).json({ error: 'AI response was not valid JSON.' });
+    }
 
-console.log('✅ OpenAI JSON schedule parsed successfully');
-res.status(200).json({ schedule: parsed });
-
+    console.log('✅ OpenAI JSON schedule parsed successfully');
+    res.status(200).json({ schedule: parsed });
 
   } catch (error) {
     console.error('❌ AI prompt FULL error:', error);
-    console.error(error.stack);
     res.status(500).json({ error: 'Failed to generate training plan' });
   }
 });
