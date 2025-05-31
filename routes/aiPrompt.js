@@ -84,8 +84,19 @@ Please generate a 4-week personalized training schedule as an array of JSON obje
   - label (e.g. "Warm-up", "Steady Run", "Interval", "Cool Down")
   - duration (in minutes)
   - zone (1–5)
+  - heartRateMin (in bpm, based on the zone below)
+  - heartRateMax (in bpm, based on the zone below)
 
+Use the following estimated heart rate zones unless the sport is "Strength Training":
+- Zone 1: Recovery (100–120 bpm)
+- Zone 2: Endurance (121–140 bpm)
+- Zone 3: Tempo (141–155 bpm)
+- Zone 4: Threshold (156–170 bpm)
+- Zone 5: VO2 Max (171–185 bpm)
+
+For Strength or Strength Training workouts, return null or omit heartRateMin and heartRateMax.
 Return ONLY a valid JSON array with no explanation or formatting.
+
     `.trim();
 
     console.log('📤 Prompt sent to OpenAI:\n', prompt);

@@ -33,6 +33,16 @@ const parseFitFile = async (localPath) => {
         return resolve([]);
       }
 
+      // 🔍 Extract resting heart rate from monitoring records
+      const monitoringRecords = data.monitoring || [];
+      const restingHeartRates = monitoringRecords
+        .map((record) => record.resting_heart_rate)
+        .filter((val) => typeof val === 'number');
+
+      const restingHeartRate = restingHeartRates.length > 0
+        ? Math.min(...restingHeartRates)
+        : null;
+
       const summary = sessions.map((session) => ({
         sport: session.sport,
         startTime: session.start_time,
@@ -42,7 +52,8 @@ const parseFitFile = async (localPath) => {
         maxHeartRate: session.max_heart_rate || null,
         avgSpeed: session.avg_speed || null,
         elevationGain: session.total_ascent || null,
-        elevationLoss: session.total_descent || null
+        elevationLoss: session.total_descent || null,
+        restingHeartRate // 🫀 Include extracted value here
       }));
 
       console.log(`✅ Parsed ${summary.length} session(s) from file: ${localPath}`);
