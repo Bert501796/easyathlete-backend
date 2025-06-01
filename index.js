@@ -20,11 +20,15 @@ app.get('/', (req, res) => {
 });
 
 app.post('/strava/exchange', async (req, res) => {
-  const { code } = req.body;
+  const { code, userId } = req.body;
 
-  if (!code) return res.status(400).json({ error: 'Missing code from request' });
+  if (!code || !userId) {
+    return res.status(400).json({ error: 'Missing code or userId' });
+  }
 
   try {
+    console.log(`🔁 Exchanging Strava code for user: ${userId}`);
+
     const response = await fetch('https://www.strava.com/oauth/token', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -37,12 +41,27 @@ app.post('/strava/exchange', async (req, res) => {
     });
 
     const data = await response.json();
-    res.status(200).json(data);
+
+    if (!response.ok || !data.access_token) {
+      console.error('❌ Strava token exchange failed:', data);
+      return res.status(500).json({ error: 'Token exchange failed' });
+    }
+
+    const { access_token, refresh_token, expires_at } = data;
+
+    console.log(`✅ Access token for ${userId}:`, access_token);
+
+    // You could store tokens here temporarily for future use (optional MVP logic)
+    // global.tokenStore = global.tokenStore || {};
+    // global.tokenStore[userId] = { access_token, refresh_token, expires_at };
+
+    res.status(200).json({ access_token });
   } catch (error) {
-    console.error('Token exchange failed:', error);
+    console.error('❌ Error during token exchange:', error);
     res.status(500).json({ error: 'Strava token exchange failed' });
   }
 });
+
 
 app.listen(PORT, () => {
   console.log(`✅ EasyAthlete API running on http://localhost:${PORT}`);
