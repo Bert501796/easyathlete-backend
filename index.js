@@ -10,13 +10,13 @@ const stravaRoute = require('./routes/strava'); // ✅ Import new strava route
 const app = express();
 const PORT = process.env.PORT || 4000;
 
-app.use(cors());
+app.use(cors({ origin: 'https://easyathlete.vercel.app', credentials: true }));
 app.use(express.json());
 
 app.use(uploadFitRoute);
 app.use(onboardingRoute);
 app.use(aiPromptRoute);
-app.use('/strava', stravaRoute); // ✅ Mount Strava under /strava
+app.use('/', stravaRoute); // ✅ Mount Strava under /strava
 
 app.get('/', (req, res) => {
   res.send('EasyAthlete API is running ✅');
