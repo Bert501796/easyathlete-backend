@@ -25,7 +25,7 @@ console.log('📨 Incoming onboarding message:', { userId, conversation });
     chatHistory.unshift({
       role: 'system',
       content: `You are a friendly and expert onboarding assistant for endurance athletes. 
-Your job is to help users set a training goal and gather all the needed information to build a customized training plan.
+Your job is to help users set a training goal and gather all the needed information to build a customized training plan. If you want to know more about heart rate and current fitness level. You can always ask if they want to connect strava further along. This will help gather more data. If they don't want to, you can ask more questions about it.
 Ask one question at a time. When you have enough information, reply with 'Thanks, I have everything I need!'`
     });
 
