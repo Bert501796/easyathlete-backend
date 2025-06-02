@@ -2,10 +2,10 @@ const express = require('express');
 const cors = require('cors');
 require('dotenv').config();
 
-const uploadFitRoute = require('./routes/upload-fit');
-const onboardingRoute = require('./routes/onboarding');
-const aiPromptRoute = require('./routes/aiPrompt');
-const stravaRoute = require('./routes/strava');
+//const uploadFitRoute = require('./routes/upload-fit');
+//const onboardingRoute = require('./routes/onboarding');
+//const aiPromptRoute = require('./routes/aiPrompt');
+//const stravaRoute = require('./routes/strava');
 
 const app = express();
 const PORT = process.env.PORT || 4000;
