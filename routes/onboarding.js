@@ -13,14 +13,19 @@ router.post('/upload-onboarding', async (req, res) => {
       return res.status(400).json({ error: 'Missing userId or onboardingData' });
     }
 
-    const jsonBuffer = Buffer.from(JSON.stringify(onboardingData, null, 2)); // ✅ Pretty printed
-    const publicId = `easyathlete/${userId}/onboarding/onboarding_${uuidv4()}`;
+    // Create a readable buffer from the JSON
+    const jsonBuffer = Buffer.from(JSON.stringify(onboardingData, null, 2));
+
+    // Set folder and filename (public_id)
+    const folder = `easyathlete/${userId}/onboarding`;
+    const publicId = `onboarding_${uuidv4()}`;
 
     const result = await new Promise((resolve, reject) => {
       const uploadStream = cloudinary.uploader.upload_stream(
         {
           resource_type: 'raw',
-          public_id: 'onboarding',
+          folder,          // ✅ Proper folder structure
+          public_id,       // ✅ Unique file name
           format: 'json',
           overwrite: false
         },
