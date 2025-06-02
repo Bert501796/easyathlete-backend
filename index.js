@@ -8,6 +8,7 @@ const aiPromptRoute = require('./routes/aiPrompt');
 const stravaAuthRoute = require('./routes/strava/strava-authentication');
 const fetchActivitiesRoute = require('./routes/strava/fetch-activities');
 const latestStravaUrl = require('./routes/data/latestStravaUrl'); // adjust path if needed
+const onboardingBot = require('./routes/onboardingBot');
 
 
 const app = express();
@@ -44,6 +45,7 @@ app.use(aiPromptRoute);
 app.use('/strava', stravaAuthRoute);
 app.use('/strava', fetchActivitiesRoute);
 app.use('/', latestStravaUrl);
+app.use('/onboarding-bot', onboardingBot);
 
 
 
