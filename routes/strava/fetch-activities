@@ -32,6 +32,9 @@ router.post('/fetch-activities', async (req, res) => {
 
     const detailedActivities = await Promise.all(
       baseActivities.map(async (activity) => {
+        let zoneDistribution = [];
+        let hrZoneBuckets = [];
+
         try {
           const streamRes = await axios.get(`https://www.strava.com/api/v3/activities/${activity.id}/streams`, {
             headers: { Authorization: `Bearer ${accessToken}` },
@@ -39,25 +42,39 @@ router.post('/fetch-activities', async (req, res) => {
           });
 
           const hrStream = streamRes.data.find(s => s.type === 'heartrate')?.data || [];
-          const zoneBuckets = [0, 0, 0, 0, 0];
+          hrZoneBuckets = [0, 0, 0, 0, 0];
 
           for (const hr of hrStream) {
             const zone = getHRZone(hr);
-            if (zone >= 1 && zone <= 5) zoneBuckets[zone - 1] += 1;
+            if (zone >= 1 && zone <= 5) hrZoneBuckets[zone - 1] += 1;
           }
 
-          const total = zoneBuckets.reduce((a, b) => a + b, 0);
-          const zoneDistribution = zoneBuckets.map(z => total ? +(z / total * 100).toFixed(1) : 0);
-
-          return {
-            ...activity,
-            zoneDistribution, // [Z1%, Z2%, Z3%, Z4%, Z5%]
-            hrZoneBuckets: zoneBuckets
-          };
-        } catch (streamErr) {
+          const total = hrZoneBuckets.reduce((a, b) => a + b, 0);
+          zoneDistribution = hrZoneBuckets.map(z => total ? +(z / total * 100).toFixed(1) : 0);
+        } catch (err) {
           console.warn(`⚠️ Failed to fetch streams for activity ${activity.id}`);
-          return activity; // Return raw activity if stream fails
         }
+
+        const distanceKm = activity.distance ? activity.distance / 1000 : 0;
+        const movingTimeMin = activity.moving_time ? activity.moving_time / 60 : 0;
+        const avgHR = activity.average_heartrate || 0;
+
+        const paceMinPerKm = distanceKm ? +(movingTimeMin / distanceKm).toFixed(2) : null;
+        const hrEfficiency = avgHR ? +(paceMinPerKm / avgHR).toFixed(4) : null;
+        const elevationPerKm = distanceKm ? +(activity.total_elevation_gain / distanceKm).toFixed(2) : null;
+        const estimatedLoad = avgHR && movingTimeMin ? +(avgHR * movingTimeMin / 100).toFixed(2) : null;
+
+        return {
+          ...activity,
+          zoneDistribution,
+          hrZoneBuckets,
+          distanceKm,
+          movingTimeMin,
+          paceMinPerKm,
+          hrEfficiency,
+          elevationPerKm,
+          estimatedLoad
+        };
       })
     );
 
@@ -75,7 +92,7 @@ router.post('/fetch-activities', async (req, res) => {
     fs.unlinkSync(filePath);
 
     return res.status(200).json({
-      message: 'Activities with HR zones stored ✅',
+      message: 'Activities enriched and stored ✅',
       cloudinaryUrl: result.secure_url
     });
   } catch (error) {
