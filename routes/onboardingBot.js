@@ -10,9 +10,11 @@ const openai = new OpenAI({
 router.post('', async (req, res) => {
   const { userId, conversation } = req.body;
 
-  if (!userId || !Array.isArray(conversation)) {
-    return res.status(400).json({ error: 'Missing or invalid userId or conversation' });
-  }
+ if (!conversation || !Array.isArray(conversation)) {
+  return res.status(400).json({ error: 'Missing or invalid conversation array' });
+}
+console.log('📨 Incoming onboarding message:', { userId, conversation });
+
 
   try {
     const chatHistory = conversation.map(msg => ({
