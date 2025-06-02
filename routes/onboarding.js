@@ -20,7 +20,7 @@ router.post('/upload-onboarding', async (req, res) => {
       const uploadStream = cloudinary.uploader.upload_stream(
         {
           resource_type: 'raw',
-          public_id,
+          public_id: 'onboarding',
           format: 'json',
           overwrite: false
         },
