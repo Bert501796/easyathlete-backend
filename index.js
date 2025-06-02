@@ -5,18 +5,36 @@ require('dotenv').config();
 const uploadFitRoute = require('./routes/upload-fit');
 const onboardingRoute = require('./routes/onboarding');
 const aiPromptRoute = require('./routes/aiPrompt');
-const stravaRoute = require('./routes/strava'); // ✅ Import new strava route
+const stravaRoute = require('./routes/strava');
 
 const app = express();
 const PORT = process.env.PORT || 4000;
 
-app.use(cors({ origin: 'https://easyathlete.vercel.app', credentials: true }));
+// ✅ Updated CORS to support both local and production
+const allowedOrigins = [
+  'http://localhost:5173',
+  'https://easyathlete.vercel.app'
+];
+
+app.use(cors({
+  origin: (origin, callback) => {
+    // allow requests with no origin (like mobile apps or curl)
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
+  credentials: true
+}));
+
 app.use(express.json());
 
+// ✅ API Routes
 app.use(uploadFitRoute);
 app.use(onboardingRoute);
 app.use(aiPromptRoute);
-app.use('/', stravaRoute); // ✅ Mount Strava under /strava
+app.use('/', stravaRoute);
 
 app.get('/', (req, res) => {
   res.send('EasyAthlete API is running ✅');
