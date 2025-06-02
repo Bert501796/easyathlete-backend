@@ -12,7 +12,8 @@ const PORT = process.env.PORT || 4000;
 
 const allowedOrigins = [
   'http://localhost:5173',
-  'https://easyathlete.vercel.app'
+  'https://easyathlete.vercel.app',
+  'https://easyathlete-clean.vercel.app'
 ];
 
 // ✅ 1. CORS setup
