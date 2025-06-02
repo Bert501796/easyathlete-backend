@@ -5,7 +5,7 @@ require('dotenv').config();
 const uploadFitRoute = require('./routes/upload-fit');
 const onboardingRoute = require('./routes/onboarding');
 const aiPromptRoute = require('./routes/aiPrompt');
-const stravaRoute = require('./routes/strava');
+const stravaAuthRoute = require('./routes/strava/strava-authentication');
 const fetchActivitiesRoute = require('./routes/strava/fetch-activities');
 
 const app = express();
@@ -39,7 +39,7 @@ app.options('*', cors(corsOptions)); // ✅ This line ensures preflight is handl
 app.use(uploadFitRoute);
 app.use(onboardingRoute);
 app.use(aiPromptRoute);
-app.use('/', stravaRoute);
+app.use('/strava', stravaAuthRoute);
 app.use('/', fetchActivitiesRoute);
 
 
