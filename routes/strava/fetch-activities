@@ -1,0 +1,57 @@
+const express = require('express');
+const axios = require('axios');
+const fs = require('fs');
+const path = require('path');
+const { v4: uuidv4 } = require('uuid');
+const { cloudinary } = require('../../utils/cloudinary'); // you'll create this helper
+const router = express.Router();
+
+router.post('/fetch-activities', async (req, res) => {
+  const { accessToken, userId } = req.body;
+
+  if (!accessToken || !userId) {
+    return res.status(400).json({ error: 'Missing accessToken or userId' });
+  }
+
+  try {
+    const response = await axios.get('https://www.strava.com/api/v3/athlete/activities', {
+      headers: {
+        Authorization: `Bearer ${accessToken}`
+      },
+      params: {
+        per_page: 50,
+        page: 1
+      }
+    });
+
+    const activities = response.data;
+    const fileName = `${userId}_activities_${uuidv4()}.json`;
+    const filePath = path.join(__dirname, '../../tmp', fileName);
+
+    // Ensure /tmp exists
+    fs.mkdirSync(path.join(__dirname, '../../tmp'), { recursive: true });
+
+    // Save JSON locally
+    fs.writeFileSync(filePath, JSON.stringify(activities, null, 2));
+
+    // Upload to Cloudinary (optional)
+    const result = await cloudinary.uploader.upload(filePath, {
+      resource_type: 'raw',
+      folder: `easyathlete/${userId}/strava`,
+      public_id: fileName.replace('.json', '')
+    });
+
+    // Remove the file locally after upload
+    fs.unlinkSync(filePath);
+
+    return res.status(200).json({
+      message: 'Activities fetched and stored ✅',
+      cloudinaryUrl: result.secure_url
+    });
+  } catch (error) {
+    console.error('❌ Fetch or store error:', error.response?.data || error.message);
+    return res.status(500).json({ error: 'Failed to fetch and store activities' });
+  }
+});
+
+module.exports = router;

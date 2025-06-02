@@ -6,6 +6,7 @@ const uploadFitRoute = require('./routes/upload-fit');
 const onboardingRoute = require('./routes/onboarding');
 const aiPromptRoute = require('./routes/aiPrompt');
 const stravaRoute = require('./routes/strava');
+const fetchActivitiesRoute = require('./routes/strava/fetch-activities');
 
 const app = express();
 const PORT = process.env.PORT || 4000;
@@ -39,6 +40,8 @@ app.use(uploadFitRoute);
 app.use(onboardingRoute);
 app.use(aiPromptRoute);
 app.use('/', stravaRoute);
+app.use('/', fetchActivitiesRoute);
+
 
 app.get('/', (req, res) => {
   res.send('EasyAthlete API is running ✅');
