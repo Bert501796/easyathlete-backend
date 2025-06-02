@@ -10,27 +10,32 @@ const stravaRoute = require('./routes/strava');
 const app = express();
 const PORT = process.env.PORT || 4000;
 
-// ✅ Updated CORS to support both local and production
+// ✅ 1. Allow both local dev and production frontend
 const allowedOrigins = [
   'http://localhost:5173',
   'https://easyathlete.vercel.app'
 ];
 
+// ✅ 2. Handle CORS with origin check
 app.use(cors({
   origin: (origin, callback) => {
-    // allow requests with no origin (like mobile apps or curl)
     if (!origin || allowedOrigins.includes(origin)) {
       callback(null, true);
     } else {
+      console.warn('❌ CORS blocked request from:', origin);
       callback(new Error('Not allowed by CORS'));
     }
   },
   credentials: true
 }));
 
+// ✅ 3. Enable JSON parsing
 app.use(express.json());
 
-// ✅ API Routes
+// ✅ 4. Handle preflight OPTIONS requests globally
+app.options('*', cors());
+
+// ✅ 5. Routes
 app.use(uploadFitRoute);
 app.use(onboardingRoute);
 app.use(aiPromptRoute);

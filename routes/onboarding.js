@@ -19,9 +19,8 @@ router.post('/upload-onboarding', async (req, res) => {
     }
 
     const tempPath = path.join(tmpDir, `${userId}-onboarding.json`);
-    fs.writeFileSync(tempPath, JSON.stringify(onboardingData));
+    fs.writeFileSync(tempPath, JSON.stringify(onboardingData, null, 2)); // ✅ Pretty print
 
-    // Upload onboarding.json to fit-files/${userId}
     const result = await cloudinary.uploader.upload(tempPath, {
       folder: `fit-files/${userId}`,
       resource_type: 'raw',
