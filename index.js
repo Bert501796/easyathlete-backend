@@ -40,7 +40,7 @@ app.use(uploadFitRoute);
 app.use(onboardingRoute);
 app.use(aiPromptRoute);
 app.use('/strava', stravaAuthRoute);
-app.use('/', fetchActivitiesRoute);
+app.use('/strava', fetchActivitiesRoute);
 
 
 app.get('/', (req, res) => {
