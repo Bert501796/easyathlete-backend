@@ -1,7 +1,7 @@
 const express = require('express');
-const fs = require('fs');
-const path = require('path');
 const { cloudinary } = require('../utils/cloudinary');
+const streamifier = require('streamifier');
+const { v4: uuidv4 } = require('uuid');
 
 const router = express.Router();
 
@@ -13,24 +13,30 @@ router.post('/upload-onboarding', async (req, res) => {
       return res.status(400).json({ error: 'Missing userId or onboardingData' });
     }
 
-    const tmpDir = path.join(__dirname, '../tmp');
-    if (!fs.existsSync(tmpDir)) {
-      fs.mkdirSync(tmpDir);
-    }
+    const jsonBuffer = Buffer.from(JSON.stringify(onboardingData, null, 2)); // ✅ Pretty printed
+    const publicId = `easyathlete/${userId}/onboarding/onboarding_${uuidv4()}`;
 
-    const tempPath = path.join(tmpDir, `${userId}-onboarding.json`);
-    fs.writeFileSync(tempPath, JSON.stringify(onboardingData, null, 2)); // ✅ Pretty print
+    const result = await new Promise((resolve, reject) => {
+      const uploadStream = cloudinary.uploader.upload_stream(
+        {
+          resource_type: 'raw',
+          public_id,
+          format: 'json',
+          overwrite: false
+        },
+        (error, result) => {
+          if (error) return reject(error);
+          return resolve(result);
+        }
+      );
 
-    const result = await cloudinary.uploader.upload(tempPath, {
-      folder: `fit-files/${userId}`,
-      resource_type: 'raw',
-      public_id: 'onboarding',
-      overwrite: true
+      streamifier.createReadStream(jsonBuffer).pipe(uploadStream);
     });
 
-    fs.unlinkSync(tempPath);
-
-    res.status(200).json({ message: 'Onboarding data uploaded', url: result.secure_url });
+    res.status(200).json({
+      message: '✅ Onboarding data uploaded successfully',
+      url: result.secure_url
+    });
   } catch (error) {
     console.error('❌ Onboarding upload error:', error);
     res.status(500).json({ error: 'Failed to upload onboarding data' });
