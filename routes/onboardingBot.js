@@ -7,7 +7,7 @@ const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY
 });
 
-router.post('/onboarding-bot', async (req, res) => {
+router.post('', async (req, res) => {
   const { userId, conversation } = req.body;
 
   if (!userId || !Array.isArray(conversation)) {
@@ -17,7 +17,7 @@ router.post('/onboarding-bot', async (req, res) => {
   try {
     const chatHistory = conversation.map(msg => ({
       role: msg.sender === 'user' ? 'user' : 'assistant',
-      content: msg.text
+      content: msg.text || msg.content
     }));
 
     chatHistory.unshift({
@@ -34,7 +34,6 @@ Ask one question at a time. When you have enough information, reply with 'Thanks
     });
 
     const reply = completion.choices?.[0]?.message?.content?.trim();
-
     const finished = reply.toLowerCase().includes("i have everything i need");
 
     res.json({ reply, finished });
