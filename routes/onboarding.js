@@ -16,22 +16,22 @@ router.post('/upload-onboarding', async (req, res) => {
     // Create a readable buffer from the JSON
     const jsonBuffer = Buffer.from(JSON.stringify(onboardingData, null, 2));
 
-    // Set folder and filename (public_id)
+    // Set folder and unique filename
     const folder = `easyathlete/${userId}/onboarding`;
-    const publicId = `onboarding_${uuidv4()}`;
+    const filename = `onboarding_${uuidv4()}`;
 
     const result = await new Promise((resolve, reject) => {
       const uploadStream = cloudinary.uploader.upload_stream(
         {
           resource_type: 'raw',
-          folder,          // ✅ Proper folder structure
-          public_id,       // ✅ Unique file name
+          folder: folder,
+          public_id: filename,
           format: 'json',
           overwrite: false
         },
         (error, result) => {
           if (error) return reject(error);
-          return resolve(result);
+          resolve(result);
         }
       );
 
