@@ -1,7 +1,5 @@
 const express = require('express');
-const { cloudinary } = require('../utils/cloudinary');
-const streamifier = require('streamifier');
-const { v4: uuidv4 } = require('uuid');
+const OnboardingResponse = require('../models/OnboardingResponse');
 
 const router = express.Router();
 
@@ -13,38 +11,17 @@ router.post('/upload-onboarding', async (req, res) => {
       return res.status(400).json({ error: 'Missing userId or onboardingData' });
     }
 
-    // Create a readable buffer from the JSON
-    const jsonBuffer = Buffer.from(JSON.stringify(onboardingData, null, 2));
-
-    // Set folder and unique filename
-    const folder = `easyathlete/${userId}/onboarding`;
-    const filename = `onboarding_${uuidv4()}`;
-
-    const result = await new Promise((resolve, reject) => {
-      const uploadStream = cloudinary.uploader.upload_stream(
-        {
-          resource_type: 'raw',
-          folder: folder,
-          public_id: filename,
-          format: 'json',
-          overwrite: false
-        },
-        (error, result) => {
-          if (error) return reject(error);
-          resolve(result);
-        }
-      );
-
-      streamifier.createReadStream(jsonBuffer).pipe(uploadStream);
+    await OnboardingResponse.create({
+      userId,
+      data: onboardingData
     });
 
     res.status(200).json({
-      message: '✅ Onboarding data uploaded successfully',
-      url: result.secure_url
+      message: '✅ Onboarding data stored in MongoDB'
     });
   } catch (error) {
-    console.error('❌ Onboarding upload error:', error);
-    res.status(500).json({ error: 'Failed to upload onboarding data' });
+    console.error('❌ Onboarding DB error:', error);
+    res.status(500).json({ error: 'Failed to store onboarding data' });
   }
 });
 

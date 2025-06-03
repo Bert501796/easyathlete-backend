@@ -2,10 +2,11 @@ const express = require('express');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
+const OnboardingResponse = require('../models/OnboardingResponse');
+const TrainingSchedule = require('../models/TrainingSchedule');
 
 const router = express.Router();
 
-// Replace this with your own secret (and store it in .env!)
 const JWT_SECRET = process.env.JWT_SECRET || 'dev-secret-key';
 
 // POST /signup
@@ -43,6 +44,37 @@ router.post('/login', async (req, res) => {
     const token = jwt.sign({ id: user._id }, JWT_SECRET, { expiresIn: '7d' });
 
     res.json({ message: '✅ Login successful', token });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
+// POST /signup-with-data
+router.post('/signup-with-data', async (req, res) => {
+  try {
+    const { email, password, name, userId } = req.body;
+
+    if (!userId) return res.status(400).json({ message: 'Missing userId' });
+
+    const existingUser = await User.findOne({ email });
+    if (existingUser) return res.status(400).json({ message: 'Email already in use' });
+
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    const newUser = new User({
+      email,
+      password: hashedPassword,
+      name,
+      createdAt: new Date()
+    });
+
+    await newUser.save();
+
+    // Future: Merge onboarding, Strava, and schedule data using userId here
+
+    const token = jwt.sign({ id: newUser._id }, JWT_SECRET, { expiresIn: '7d' });
+
+    res.status(201).json({ message: '✅ Account created with data', token });
   } catch (err) {
     res.status(500).json({ message: err.message });
   }

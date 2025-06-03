@@ -1,4 +1,3 @@
-// backend/src/routes/trainingSchedule.js
 const express = require('express');
 const router = express.Router();
 const openai = require('../utils/openaiClient');
@@ -6,30 +5,13 @@ const fs = require('fs');
 const path = require('path');
 const { defaultZones } = require('../training_templates/utils/heartRateZones');
 const { getUserOnboardingData } = require('../utils/userDataLoader');
-const { cloudinary } = require('../utils/cloudinary');
-
-const uploadToCloudinary = (buffer, publicId) => {
-  return new Promise((resolve, reject) => {
-    cloudinary.uploader.upload_stream(
-      {
-        resource_type: 'raw',
-        public_id: publicId,
-        overwrite: true
-      },
-      (error, result) => {
-        if (error) reject(error);
-        else resolve(result);
-      }
-    ).end(buffer);
-  });
-  console.log(`🗂 Uploading ${publicId} with size: ${buffer.length} bytes`);
-
-};
+const TrainingSchedule = require('../models/TrainingSchedule');
+const AiPrompt = require('../models/AiPrompt');
 
 router.post('/generate-training-schedule', async (req, res) => {
   const { userId } = req.body;
 
-    console.log('📥 Received userId:', userId);  // ✅ Add this
+  console.log('📥 Received userId:', userId);
 
   if (!userId) {
     return res.status(400).json({ error: 'Missing userId' });
@@ -37,7 +19,6 @@ router.post('/generate-training-schedule', async (req, res) => {
 
   try {
     const athleteData = await getUserOnboardingData(userId);
-
     if (!athleteData) {
       return res.status(404).json({ error: 'Athlete data not found' });
     }
@@ -45,7 +26,6 @@ router.post('/generate-training-schedule', async (req, res) => {
     const schedule = [];
     const prompts = [];
 
-    // Example weekly training plan using full range of categories
     const plan = [
       { day: 'Monday', type: 'running/endurance', duration: 45 },
       { day: 'Tuesday', type: 'strength/core', duration: 30 },
@@ -59,28 +39,24 @@ router.post('/generate-training-schedule', async (req, res) => {
     console.log('🧠 Athlete data used in builder:', athleteData);
 
     for (const workout of plan) {
-      let messages = [];
-
       const [category, format] = workout.type.split('/');
       const templatePath = path.join(__dirname, `../training_templates/${category}/${format}.js`);
 
-      if (fs.existsSync(templatePath)) {
-        console.log(`📂 Loading template: ${templatePath}`);
-
-        const builderModule = require(templatePath);
-        const builder = builderModule.default || builderModule;
-
-        if (typeof builder !== 'function') {
-          console.error(`❌ Builder loaded from ${templatePath} is not a function.`);
-          continue;
-        }
-
-        messages = builder({ ...athleteData, heartRateZones: defaultZones }, { duration: workout.duration });
-        prompts.push({ day: workout.day, type: workout.type, messages });
-      } else {
+      if (!fs.existsSync(templatePath)) {
         console.warn('❌ Missing builder for', workout.type);
         continue;
       }
+
+      const builderModule = require(templatePath);
+      const builder = builderModule.default || builderModule;
+
+      if (typeof builder !== 'function') {
+        console.error(`❌ Builder loaded from ${templatePath} is not a function.`);
+        continue;
+      }
+
+      const messages = builder({ ...athleteData, heartRateZones: defaultZones }, { duration: workout.duration });
+      prompts.push({ day: workout.day, type: workout.type, messages });
 
       const response = await openai.chat.completions.create({
         model: 'gpt-4',
@@ -92,40 +68,51 @@ router.post('/generate-training-schedule', async (req, res) => {
       schedule.push({ day: workout.day, type: workout.type, aiOutput });
     }
 
-    // Upload results to Cloudinary
-    const basePath = `easyathlete/${userId}`;
-    const timestamp = new Date().toISOString().split('T')[0];
+    // Store AI prompts
+    await AiPrompt.create({
+      userId,
+      prompts,
+      source: 'initial'
+    });
 
-    const schedulePath = `${basePath}/schedule/training_schedule_${timestamp}`;
-    const promptPath = `${basePath}/aiPrompt/training_prompts_${timestamp}`;
+    // Store training schedule
+    await TrainingSchedule.create({
+      userId,
+      prompt: prompts,
+      response: schedule,
+      source: 'initial'
+    });
 
-    try {
-      await uploadToCloudinary(
-        Buffer.from(JSON.stringify(schedule, null, 2), 'utf-8'),
-        schedulePath
-      );
-      console.log('✅ Uploaded training schedule to:', schedulePath);
-    } catch (err) {
-      console.error('❌ Failed to upload training schedule:', err);
-    }
+    console.log('✅ Stored training schedule and AI prompts in MongoDB');
 
-    try {
-      await uploadToCloudinary(
-        Buffer.from(JSON.stringify(prompts, null, 2), 'utf-8'),
-        promptPath
-      );
-      console.log('✅ Uploaded training prompts to:', promptPath);
-      res.json({ userId, schedule }); // ✅ Final response
-    } catch (err) {
-      console.error('❌ Failed to upload training prompts:', err);
-      res.status(500).json({ error: 'Failed to upload training prompts' }); // ✅ Ensure response on failure
-    }
-
+    res.status(201).json({ message: '✅ Training schedule and prompts saved', schedule });
   } catch (error) {
     console.error('❌ Error generating schedule:', error.stack || error.message || error);
-    res.status(500).json({ error: 'Failed to generate training schedule' }); // ✅ Catch block for main logic
+    res.status(500).json({ error: 'Failed to generate training schedule' });
   }
 });
 
+// ✅ New route: fetch latest training schedule for user
+router.get('/schedule/latest/:userId', async (req, res) => {
+  const { userId } = req.params;
+
+  if (!userId) {
+    return res.status(400).json({ error: 'Missing userId' });
+  }
+
+  try {
+    const schedule = await TrainingSchedule.findOne({ userId })
+      .sort({ createdAt: -1 });
+
+    if (!schedule) {
+      return res.status(404).json({ error: 'No schedule found for this user' });
+    }
+
+    res.status(200).json({ schedule: schedule.response });
+  } catch (error) {
+    console.error('❌ Error fetching latest schedule:', error);
+    res.status(500).json({ error: 'Failed to retrieve schedule' });
+  }
+});
 
 module.exports = router;
