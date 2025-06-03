@@ -13,7 +13,7 @@ const uploadToCloudinary = (buffer, publicId) => {
     cloudinary.uploader.upload_stream(
       {
         resource_type: 'raw',
-        public_id: publicId,
+        public_id,
         overwrite: true
       },
       (error, result) => {
@@ -22,6 +22,8 @@ const uploadToCloudinary = (buffer, publicId) => {
       }
     ).end(buffer);
   });
+  console.log(`🗂 Uploading ${publicId} with size: ${buffer.length} bytes`);
+
 };
 
 router.post('/generate-training-schedule', async (req, res) => {
