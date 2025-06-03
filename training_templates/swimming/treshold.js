@@ -1,4 +1,3 @@
-const athleteData = { ...(await getUserOnboardingData(userId)), userId };
 const buildSwimmingTreshold = (athleteData, dayMeta) => [
   { role: 'system', content: 'You are a swim coach designing lactate threshold workouts.' },
   {

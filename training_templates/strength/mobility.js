@@ -1,4 +1,3 @@
-const athleteData = { ...(await getUserOnboardingData(userId)), userId };
 const buildStrengthMobility = (athleteData, dayMeta) => {
   return [
     { role: 'system', content: 'You are a mobility expert helping athletes improve range of motion and prevent injuries.' },

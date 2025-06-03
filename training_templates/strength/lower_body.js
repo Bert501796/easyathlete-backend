@@ -1,4 +1,3 @@
-const athleteData = { ...(await getUserOnboardingData(userId)), userId };
 const buildStrengthLowerBody = (athleteData, dayMeta) => {
   return [
     { role: 'system', content: 'You are a certified strength coach focusing on lower body development for athletes.' },

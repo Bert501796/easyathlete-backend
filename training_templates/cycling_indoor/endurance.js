@@ -1,4 +1,3 @@
-const athleteData = { ...(await getUserOnboardingData(userId)), userId };
 const buildCyclingIndoorEndurance = (athleteData, dayMeta) => {
   return [
     { role: 'system', content: 'You are a professional indoor cycling coach specialized in endurance development.' },

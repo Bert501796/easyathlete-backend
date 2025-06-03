@@ -1,4 +1,3 @@
-const athleteData = { ...(await getUserOnboardingData(userId)), userId };
 const buildRunningTreshold = (athleteData, dayMeta) => {
   return [
     { role: 'system', content: 'You are a running coach designing threshold workouts.' },

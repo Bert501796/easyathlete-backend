@@ -1,4 +1,3 @@
-const athleteData = { ...(await getUserOnboardingData(userId)), userId };
 const buildSwimmingVO2Max = (athleteData, dayMeta) => [
   { role: 'system', content: 'You are a swim coach creating high intensity VO2 max sets.' },
   {

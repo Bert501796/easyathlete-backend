@@ -1,4 +1,3 @@
-const athleteData = { ...(await getUserOnboardingData(userId)), userId };
 const buildRunningIntervals = (athleteData, dayMeta) => {
   return [
     { role: 'system', content: 'You are a running coach designing interval workouts.' },

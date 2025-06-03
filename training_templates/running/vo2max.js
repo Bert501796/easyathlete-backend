@@ -1,4 +1,3 @@
-const athleteData = { ...(await getUserOnboardingData(userId)), userId };
 const buildRunningVo2max = (athleteData, dayMeta) => {
   return [
     { role: 'system', content: 'You are a running coach designing VO2max sessions.' },
