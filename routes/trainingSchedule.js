@@ -54,6 +54,8 @@ router.post('/generate-training-schedule', async (req, res) => {
       { day: 'Sunday', type: 'running/recovery', duration: 25 }
     ];
 
+    console.log('🧠 Athlete data used in builder:', athleteData);
+
     for (const workout of plan) {
       let messages = [];
 
@@ -104,7 +106,7 @@ router.post('/generate-training-schedule', async (req, res) => {
 
     res.json({ userId, schedule });
   } catch (error) {
-    console.error('❌ Error generating schedule:', error.response?.data || error.message || error);
+console.error('❌ Error generating schedule:', error.stack || error.message || error);
     res.status(500).json({ error: 'Failed to generate training schedule' });
   }
 });

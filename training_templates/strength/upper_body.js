@@ -1,3 +1,4 @@
+const athleteData = { ...(await getUserOnboardingData(userId)), userId };
 const buildStrengthUpperBody = (athleteData, dayMeta) => {
   return [
     { role: 'system', content: 'You are a certified strength coach creating upper body workouts tailored for endurance athletes.' },

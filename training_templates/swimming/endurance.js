@@ -1,3 +1,4 @@
+const athleteData = { ...(await getUserOnboardingData(userId)), userId };
 const buildSwimmingEndurance = (athleteData, dayMeta) => [
   { role: 'system', content: 'You are a swim coach creating endurance workouts.' },
   {

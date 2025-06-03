@@ -1,3 +1,4 @@
+const athleteData = { ...(await getUserOnboardingData(userId)), userId };
 const buildCyclingIndoorSweetSpot = (athleteData, dayMeta) => {
   return [
     { role: 'system', content: 'You are a top-tier indoor cycling coach focused on sweet spot training.' },
