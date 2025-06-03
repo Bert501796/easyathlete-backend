@@ -3,7 +3,7 @@ const { cloudinary } = require('./cloudinary');
 
 const fetchCloudinaryRawFile = async (path) => {
   const resources = await cloudinary.search
-    .expression(`folder="${path}" AND resource_type="raw"`)
+    .expression(`folder="easyathlete/${userId}/onboarding" AND resource_type="raw"`)
     .sort_by('public_id', 'desc')
     .max_results(10)
     .execute();
@@ -23,7 +23,7 @@ const getUserOnboardingData = async (userId) => {
   const folderPath = `fit-files/${userId}`;
   const files = await fetchCloudinaryRawFile(folderPath);
 
-  const onboardingFile = files.find(f => f.public_id.includes('/onboarding'));
+const onboardingFile = files.find(f => f.public_id.includes('/onboarding/onboarding_'));
   if (!onboardingFile) {
     console.warn(`⚠️ No onboarding.json found for user ${userId}`);
     return null;
