@@ -6,6 +6,23 @@ const fs = require('fs');
 const path = require('path');
 const { defaultZones } = require('../training_templates/utils/heartRateZones');
 const { getUserOnboardingData } = require('../utils/userDataLoader');
+const { cloudinary } = require('../utils/cloudinary');
+
+const uploadToCloudinary = (buffer, publicId) => {
+  return new Promise((resolve, reject) => {
+    cloudinary.uploader.upload_stream(
+      {
+        resource_type: 'raw',
+        public_id: publicId,
+        overwrite: true
+      },
+      (error, result) => {
+        if (error) reject(error);
+        else resolve(result);
+      }
+    ).end(buffer);
+  });
+};
 
 router.post('/generate-training-schedule', async (req, res) => {
   const { userId } = req.body;
@@ -22,6 +39,7 @@ router.post('/generate-training-schedule', async (req, res) => {
     }
 
     const schedule = [];
+    const prompts = [];
 
     // Example weekly training plan using full range of categories
     const plan = [
@@ -52,6 +70,7 @@ router.post('/generate-training-schedule', async (req, res) => {
         }
 
         messages = builder({ ...athleteData, heartRateZones: defaultZones }, { duration: workout.duration });
+        prompts.push({ day: workout.day, type: workout.type, messages });
       } else {
         console.warn('❌ Missing builder for', workout.type);
         continue;
@@ -66,6 +85,20 @@ router.post('/generate-training-schedule', async (req, res) => {
       const aiOutput = response.choices?.[0]?.message?.content;
       schedule.push({ day: workout.day, type: workout.type, aiOutput });
     }
+
+    // Upload results to Cloudinary
+    const folder = `fit-files/${userId}`;
+    const timestamp = new Date().toISOString().split('T')[0];
+
+    await uploadToCloudinary(
+      Buffer.from(JSON.stringify(schedule, null, 2), 'utf-8'),
+      `${folder}/training_schedule_${timestamp}`
+    );
+
+    await uploadToCloudinary(
+      Buffer.from(JSON.stringify(prompts, null, 2), 'utf-8'),
+      `${folder}/training_prompts_${timestamp}`
+    );
 
     res.json({ userId, schedule });
   } catch (error) {
