@@ -5,27 +5,33 @@ const openai = require('../utils/openaiClient');
 const fs = require('fs');
 const path = require('path');
 const { defaultZones } = require('../training_templates/utils/heartRateZones');
-
-// Template builders
-const buildRunningEndurancePrompt = require('../training_templates/running/endurance');
-const buildCyclingEndurancePrompt = require('../training_templates/cycling_indoor/endurance');
+const { getUserOnboardingData } = require('../utils/userDataLoader');
 
 router.post('/generate-training-schedule', async (req, res) => {
-  const { userId, athleteData } = req.body;
+  const { userId } = req.body;
 
-  if (!userId || !athleteData) {
-    return res.status(400).json({ error: 'Missing userId or athleteData' });
+  if (!userId) {
+    return res.status(400).json({ error: 'Missing userId' });
   }
 
   try {
+    const athleteData = await getUserOnboardingData(userId);
+
+    if (!athleteData) {
+      return res.status(404).json({ error: 'Athlete data not found' });
+    }
+
     const schedule = [];
 
-    // Dummy example: generate 4 weekly workouts
+    // Example weekly training plan using full range of categories
     const plan = [
       { day: 'Monday', type: 'running/endurance', duration: 45 },
-      { day: 'Wednesday', type: 'cycling_indoor/endurance', duration: 60 },
-      { day: 'Friday', type: 'running/endurance', duration: 30 },
-      { day: 'Sunday', type: 'cycling_indoor/endurance', duration: 75 }
+      { day: 'Tuesday', type: 'strength/core', duration: 30 },
+      { day: 'Wednesday', type: 'cycling_indoor/sweetspot', duration: 60 },
+      { day: 'Thursday', type: 'swimming/technique', duration: 45 },
+      { day: 'Friday', type: 'strength/upper_body', duration: 40 },
+      { day: 'Saturday', type: 'cycling_outdoor/treshold', duration: 90 },
+      { day: 'Sunday', type: 'running/recovery', duration: 25 }
     ];
 
     for (const workout of plan) {
@@ -35,12 +41,14 @@ router.post('/generate-training-schedule', async (req, res) => {
       const templatePath = path.join(__dirname, `../training_templates/${category}/${format}.js`);
 
       if (fs.existsSync(templatePath)) {
+        console.log(`📂 Loading template: ${templatePath}`);
+
         const builderModule = require(templatePath);
-        const builder = builderModule.default || builderModule; // supports both CommonJS & ESModule
+        const builder = builderModule.default || builderModule;
 
         if (typeof builder !== 'function') {
-            console.error(`❌ Builder loaded from ${templatePath} is not a function.`);
-            continue;
+          console.error(`❌ Builder loaded from ${templatePath} is not a function.`);
+          continue;
         }
 
         messages = builder({ ...athleteData, heartRateZones: defaultZones }, { duration: workout.duration });
@@ -61,9 +69,9 @@ router.post('/generate-training-schedule', async (req, res) => {
 
     res.json({ userId, schedule });
   } catch (error) {
-  console.error('❌ Error generating schedule:', error.response?.data || error.message || error);
-  res.status(500).json({ error: 'Failed to generate training schedule' });
-}
+    console.error('❌ Error generating schedule:', error.response?.data || error.message || error);
+    res.status(500).json({ error: 'Failed to generate training schedule' });
+  }
 });
 
 module.exports = router;

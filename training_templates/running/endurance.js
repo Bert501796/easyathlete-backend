@@ -1,16 +1,16 @@
-const buildRunningEndurancePrompt = (athleteData, dayMeta) => {
+const buildRunningEndurance = (athleteData, dayMeta) => {
   return [
-    { role: 'system', content: 'You are an elite running coach focused on endurance training.' },
+    { role: 'system', content: 'You are a running coach designing endurance runs.' },
     {
       role: 'user',
-      content: `Create an endurance run for:
+      content: `Create an endurance run:
 - Athlete Level: ${athleteData.level}
 - Duration: ${dayMeta.duration} min
 - Zones: ${JSON.stringify(athleteData.heartRateZones)}
 
-Output JSON with: sport, segments (with duration, zone, heartRateMin, heartRateMax), notes`
+Output JSON with: sport, segments (duration, zone, heartRateMin, heartRateMax), notes`
     }
   ];
 };
 
-module.exports = buildRunningEndurancePrompt;
+module.exports = buildRunningEndurance;
