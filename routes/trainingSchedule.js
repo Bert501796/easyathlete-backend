@@ -91,7 +91,7 @@ router.post('/generate-training-schedule', async (req, res) => {
     }
 
     // Upload results to Cloudinary
-    const folder = `fit-files/${userId}`;
+    const folder = `easyathlete/${userId}`;
     const timestamp = new Date().toISOString().split('T')[0];
 
     await uploadToCloudinary(
