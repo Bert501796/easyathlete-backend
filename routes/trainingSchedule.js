@@ -54,9 +54,9 @@ router.post('/generate-training-schedule', async (req, res) => {
 
     res.json({ userId, schedule });
   } catch (error) {
-console.error('❌ Error generating schedule:', error.response?.data || error.message || error);
-    res.status(500).json({ error: 'Failed to generate training schedule' });
-  }
+  console.error('❌ Error generating schedule:', error.response?.data || error.message || error);
+  res.status(500).json({ error: 'Failed to generate training schedule' });
+}
 });
 
 module.exports = router;
