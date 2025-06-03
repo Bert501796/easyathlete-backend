@@ -27,6 +27,8 @@ const uploadToCloudinary = (buffer, publicId) => {
 router.post('/generate-training-schedule', async (req, res) => {
   const { userId } = req.body;
 
+    console.log('📥 Received userId:', userId);  // ✅ Add this
+
   if (!userId) {
     return res.status(400).json({ error: 'Missing userId' });
   }
