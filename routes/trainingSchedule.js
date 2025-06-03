@@ -91,24 +91,39 @@ router.post('/generate-training-schedule', async (req, res) => {
     }
 
     // Upload results to Cloudinary
-    const folder = `easyathlete/${userId}`;
+    const basePath = `easyathlete/${userId}`;
     const timestamp = new Date().toISOString().split('T')[0];
 
-    await uploadToCloudinary(
-      Buffer.from(JSON.stringify(schedule, null, 2), 'utf-8'),
-      `${folder}/training_schedule_${timestamp}`
-    );
+    const schedulePath = `${basePath}/schedule/training_schedule_${timestamp}`;
+    const promptPath = `${basePath}/aiPrompt/training_prompts_${timestamp}`;
 
-    await uploadToCloudinary(
-      Buffer.from(JSON.stringify(prompts, null, 2), 'utf-8'),
-      `${folder}/training_prompts_${timestamp}`
-    );
+    try {
+      await uploadToCloudinary(
+        Buffer.from(JSON.stringify(schedule, null, 2), 'utf-8'),
+        schedulePath
+      );
+      console.log('✅ Uploaded training schedule to:', schedulePath);
+    } catch (err) {
+      console.error('❌ Failed to upload training schedule:', err);
+    }
 
-    res.json({ userId, schedule });
+    try {
+      await uploadToCloudinary(
+        Buffer.from(JSON.stringify(prompts, null, 2), 'utf-8'),
+        promptPath
+      );
+      console.log('✅ Uploaded training prompts to:', promptPath);
+      res.json({ userId, schedule }); // ✅ Final response
+    } catch (err) {
+      console.error('❌ Failed to upload training prompts:', err);
+      res.status(500).json({ error: 'Failed to upload training prompts' }); // ✅ Ensure response on failure
+    }
+
   } catch (error) {
-console.error('❌ Error generating schedule:', error.stack || error.message || error);
-    res.status(500).json({ error: 'Failed to generate training schedule' });
+    console.error('❌ Error generating schedule:', error.stack || error.message || error);
+    res.status(500).json({ error: 'Failed to generate training schedule' }); // ✅ Catch block for main logic
   }
 });
+
 
 module.exports = router;

@@ -10,9 +10,9 @@ cloudinary.config({
 const storage = new CloudinaryStorage({
   cloudinary,
   params: async (req, file) => {
-    const userId = req.query?.userId || 'anon'; // ✅ now from query
+    const userId = req.query?.userId || 'anon'; // Still okay for fallback
     return {
-      folder: `fit-files/${userId}/fit-files`,
+      folder: `easyathlete/${userId}/fit-files`, // ✅ Updated to match new user-based structure
       resource_type: 'raw',
       format: 'fit'
     };
