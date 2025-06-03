@@ -13,7 +13,7 @@ const uploadToCloudinary = (buffer, publicId) => {
     cloudinary.uploader.upload_stream(
       {
         resource_type: 'raw',
-        public_id,
+        public_id: publicId,
         overwrite: true
       },
       (error, result) => {
