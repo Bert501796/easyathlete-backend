@@ -1,3 +1,5 @@
+//used to store the onboarding answers separately in MongoDB
+
 const mongoose = require('mongoose');
 
 const onboardingResponseSchema = new mongoose.Schema({

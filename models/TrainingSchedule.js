@@ -1,3 +1,4 @@
+//used to store the Training schedule in MongoDB
 const mongoose = require('mongoose');
 
 const trainingScheduleSchema = new mongoose.Schema({
