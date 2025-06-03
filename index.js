@@ -11,6 +11,8 @@ const latestStravaUrl = require('./routes/data/latestStravaUrl'); // adjust path
 const onboardingBot = require('./routes/onboardingBot');
 const trainingScheduleRoute = require('./routes/trainingSchedule');
 const testRoutes = require('./routes/test');
+const authRoutes = require('./routes/auth');
+
 
 const mongoose = require('mongoose');
 require('dotenv').config();
@@ -49,6 +51,8 @@ const corsOptions = {
 app.use(express.json());
 app.use(cors(corsOptions));
 app.options('*', cors(corsOptions)); // ✅ This line ensures preflight is handled!
+app.use('/auth', authRoutes);
+
 
 // ✅ 3. Routes
 app.use(uploadFitRoute);
