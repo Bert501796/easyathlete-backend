@@ -35,7 +35,8 @@ router.post('/generate-training-schedule', async (req, res) => {
       const templatePath = path.join(__dirname, `../training_templates/${category}/${format}.js`);
 
       if (fs.existsSync(templatePath)) {
-        const builder = require(templatePath);
+const builderModule = require(templatePath);
+const builder = builderModule.default || builderModule; // supports both CommonJS & ESModule
         messages = builder({ ...athleteData, heartRateZones: defaultZones }, { duration: workout.duration });
       } else {
         console.warn('❌ Missing builder for', workout.type);
