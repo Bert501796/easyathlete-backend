@@ -11,7 +11,7 @@ const latestStravaUrl = require('./routes/data/latestStravaUrl'); // adjust path
 const onboardingBot = require('./routes/onboardingBot');
 const trainingScheduleRoute = require('./routes/trainingSchedule');
 const userRoutes = require('./routes/user');
-const authRoutes = require('./routes/auth');
+const authRoutes = require('./routes/auth/auth');
 
 
 const mongoose = require('mongoose');
