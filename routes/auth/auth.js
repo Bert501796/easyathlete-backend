@@ -1,9 +1,9 @@
 const express = require('express');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
-const User = require('../models/User');
-const OnboardingResponse = require('../models/OnboardingResponse');
-const TrainingSchedule = require('../models/TrainingSchedule');
+const User = require('../../models/User');
+const OnboardingResponse = require('../../models/OnboardingResponse');
+const TrainingSchedule = require('../../models/TrainingSchedule');
 const AiPrompt = require('../../models/AiPrompt');
 
 const router = express.Router();
