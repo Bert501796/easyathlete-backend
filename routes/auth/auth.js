@@ -5,6 +5,8 @@ const User = require('../../models/User');
 const OnboardingResponse = require('../../models/OnboardingResponse');
 const TrainingSchedule = require('../../models/TrainingSchedule');
 const AiPrompt = require('../../models/AiPrompt');
+const StravaActivity = require('../../models/StravaActivity');
+
 
 const router = express.Router();
 
@@ -73,6 +75,7 @@ router.post('/signup-with-data', async (req, res) => {
       OnboardingResponse.updateMany(updateConditions, updateAction),
       AiPrompt.updateMany(updateConditions, updateAction),
       TrainingSchedule.updateMany(updateConditions, updateAction)
+      StravaActivity.updateMany(updateConditions, updateAction)
     ]);
 
     const token = jwt.sign({ id: newUserId }, JWT_SECRET, { expiresIn: '7d' });
