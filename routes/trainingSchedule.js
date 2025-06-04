@@ -6,7 +6,7 @@ const path = require('path');
 const { defaultZones } = require('../training_templates/utils/heartRateZones');
 const { getUserOnboardingData } = require('../utils/userDataLoader');
 const TrainingSchedule = require('../models/TrainingSchedule');
-const AiPrompt = require('../models/aiPrompt');
+const AiPrompt = require('../models/AiPrompt');
 
 router.post('/generate-training-schedule', async (req, res) => {
   const { userId } = req.body;
