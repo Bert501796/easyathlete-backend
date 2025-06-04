@@ -74,7 +74,7 @@ router.post('/signup-with-data', async (req, res) => {
     await Promise.all([
       OnboardingResponse.updateMany(updateConditions, updateAction),
       AiPrompt.updateMany(updateConditions, updateAction),
-      TrainingSchedule.updateMany(updateConditions, updateAction)
+      TrainingSchedule.updateMany(updateConditions, updateAction),
       StravaActivity.updateMany(updateConditions, updateAction)
     ]);
 
