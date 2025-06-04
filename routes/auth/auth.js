@@ -119,5 +119,32 @@ router.post('/migrate-user-data', async (req, res) => {
     res.status(500).json({ error: 'Migration failed' });
   }
 });
+// DELETE /auth/:userId
+router.delete('/:userId', async (req, res) => {
+  const { userId } = req.params;
+
+  try {
+    const [user, onboarding, prompts, schedules] = await Promise.all([
+      User.deleteOne({ _id: userId }),
+      OnboardingResponse.deleteMany({ userId }),
+      AiPrompt.deleteMany({ userId }),
+      TrainingSchedule.deleteMany({ userId })
+    ]);
+
+    res.status(200).json({
+      message: `✅ Deleted user and related data for userId: ${userId}`,
+      deleted: {
+        user: user.deletedCount,
+        onboarding: onboarding.deletedCount,
+        prompts: prompts.deletedCount,
+        schedules: schedules.deletedCount
+      }
+    });
+  } catch (err) {
+    console.error('❌ Error deleting user:', err);
+    res.status(500).json({ message: '❌ Failed to delete user and related data' });
+  }
+});
+
 
 module.exports = router;
