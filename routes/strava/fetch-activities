@@ -1,9 +1,7 @@
 const express = require('express');
 const axios = require('axios');
-const fs = require('fs');
-const path = require('path');
 const { v4: uuidv4 } = require('uuid');
-const { cloudinary } = require('../../utils/cloudinary');
+const StravaActivity = require('../../models/StravaActivity');
 const router = express.Router();
 
 const getHRZone = (hr, maxHr = 190) => {
@@ -78,25 +76,42 @@ router.post('/fetch-activities', async (req, res) => {
       })
     );
 
-    const fileName = `${userId}_strava_insights_${uuidv4()}.json`;
-    const filePath = path.join(__dirname, '../../tmp', fileName);
-    fs.mkdirSync(path.join(__dirname, '../../tmp'), { recursive: true });
-    fs.writeFileSync(filePath, JSON.stringify(detailedActivities, null, 2));
-
-    const result = await cloudinary.uploader.upload(filePath, {
-      resource_type: 'raw',
-      folder: `easyathlete/${userId}/strava`,
-      public_id: fileName.replace('.json', '')
-    });
-
-    fs.unlinkSync(filePath);
+    await Promise.all(
+      detailedActivities.map(async (activity) => {
+        try {
+          await StravaActivity.findOneAndUpdate(
+            { stravaId: activity.id, userId },
+            {
+              userId,
+              stravaId: activity.id,
+              name: activity.name,
+              type: activity.sport_type,
+              startDate: activity.start_date,
+              distanceKm: activity.distanceKm,
+              movingTimeMin: activity.movingTimeMin,
+              paceMinPerKm: activity.paceMinPerKm,
+              hrEfficiency: activity.hrEfficiency,
+              elevationPerKm: activity.elevationPerKm,
+              estimatedLoad: activity.estimatedLoad,
+              averageHeartrate: activity.average_heartrate || 0,
+              zoneDistribution: activity.zoneDistribution,
+              hrZoneBuckets: activity.hrZoneBuckets,
+              raw: activity
+            },
+            { upsert: true, new: true }
+          );
+        } catch (err) {
+          console.warn(`❌ Failed to store activity ${activity.id}:`, err.message);
+        }
+      })
+    );
 
     return res.status(200).json({
-      message: 'Activities enriched and stored ✅',
-      cloudinaryUrl: result.secure_url
+      message: '✅ Activities enriched and stored in MongoDB',
+      count: detailedActivities.length
     });
   } catch (error) {
-    console.error('❌ Fetch or store error:', error.response?.data || error.message);
+    console.error('❌ Fetch error:', error.response?.data || error.message);
     return res.status(500).json({ error: 'Failed to fetch and store activities' });
   }
 });
