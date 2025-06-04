@@ -17,22 +17,7 @@ router.get('/insights/:userId', async (req, res) => {
   return {
     ...a._doc,
 //    type: a.type === 'VirtualRide' ? 'Ride' : a.type,
-    paceMinPerKm: a.averageSpeed ? +(1000 / (a.averageSpeed * 60)).toFixed(2) : null,
-    hrEfficiency:
-      a.averageHeartrate && a.averageSpeed
-        ? +(a.averageSpeed / a.averageHeartrate).toFixed(3)
-        : null,
-    elevationPerKm:
-      a.totalElevationGain && a.distanceKm
-        ? +(a.totalElevationGain / a.distanceKm).toFixed(1)
-        : null,
-    estimatedLoad: a.kilojoules || a.sufferScore || a.estimatedLoad || null,
-    fitness_score: a.fitness_score ?? null,
-    zone1: zoneSeconds[0] > 0 ? +(zoneSeconds[0] / totalZoneTime * 100).toFixed(1) : undefined,
-    zone2: zoneSeconds[1] > 0 ? +(zoneSeconds[1] / totalZoneTime * 100).toFixed(1) : undefined,
-    zone3: zoneSeconds[2] > 0 ? +(zoneSeconds[2] / totalZoneTime * 100).toFixed(1) : undefined,
-    zone4: zoneSeconds[3] > 0 ? +(zoneSeconds[3] / totalZoneTime * 100).toFixed(1) : undefined,
-    zone5: zoneSeconds[4] > 0 ? +(zoneSeconds[4] / totalZoneTime * 100).toFixed(1) : undefined
+
   };
 });
 
