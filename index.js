@@ -7,12 +7,11 @@ const onboardingRoute = require('./routes/onboarding');
 const aiPromptRoute = require('./routes/aiPrompt');
 const stravaAuthRoute = require('./routes/strava/strava-authentication');
 const fetchActivitiesRoute = require('./routes/strava/fetch-activities');
-const latestStravaUrl = require('./routes/data/latestStravaUrl'); // adjust path if needed
+const insightsRoute = require('./routes/strava/insights'); // ✅ NEW
 const onboardingBot = require('./routes/onboardingBot');
 const trainingScheduleRoute = require('./routes/trainingSchedule');
 const userRoutes = require('./routes/user');
 const authRoutes = require('./routes/auth/auth');
-
 
 const mongoose = require('mongoose');
 require('dotenv').config();
@@ -23,7 +22,6 @@ mongoose.connect(process.env.MONGO_URL, {
 })
 .then(() => console.log('✅ MongoDB connected on Railway'))
 .catch(err => console.error('❌ MongoDB connection error:', err));
-
 
 const app = express();
 const PORT = process.env.PORT || 4000;
@@ -50,9 +48,8 @@ const corsOptions = {
 // ✅ 2. Middleware order matters
 app.use(express.json());
 app.use(cors(corsOptions));
-app.options('*', cors(corsOptions)); // ✅ This line ensures preflight is handled!
+app.options('*', cors(corsOptions)); // ✅ Preflight support
 app.use('/auth', authRoutes);
-
 
 // ✅ 3. Routes
 app.use(uploadFitRoute);
@@ -60,12 +57,10 @@ app.use(onboardingRoute);
 app.use(aiPromptRoute);
 app.use('/strava', stravaAuthRoute);
 app.use('/strava', fetchActivitiesRoute);
-app.use('/', latestStravaUrl);
+app.use('/strava', insightsRoute); // ✅ NEW: for insights from stravaactivities
 app.use('/onboarding-bot', onboardingBot);
 app.use(trainingScheduleRoute);
 app.use('/user', userRoutes);
-
-
 
 app.get('/', (req, res) => {
   res.send('EasyAthlete API is running ✅');
