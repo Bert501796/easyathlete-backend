@@ -55,12 +55,13 @@ router.post('/signup-with-data', async (req, res) => {
     if (existingUser) return res.status(400).json({ message: 'Email already in use' });
 
     const hashedPassword = await bcrypt.hash(password, 10);
-const newUser = new User({
-  email,
-  password: hashedPassword,
-  name,
-  customUserId: oldUserId // ✅ preserve the onboarding ID for future lookups
-});    await newUser.save();
+    const newUser = new User({
+      email,
+      password: hashedPassword,
+      name,
+      customUserId: oldUserId // ✅ key addition
+    });
+    await newUser.save();
 
     const newUserId = newUser._id;
     const updateConditions = { userId: oldUserId };
@@ -70,7 +71,7 @@ const newUser = new User({
       OnboardingResponse.updateMany(updateConditions, updateAction),
       AiPrompt.updateMany(updateConditions, updateAction),
       TrainingSchedule.updateMany(updateConditions, updateAction),
-      StravaActivity.updateMany(updateConditions, updateAction) // ✅ migrate activities
+      StravaActivity.updateMany(updateConditions, updateAction)
     ]);
 
     const token = jwt.sign({ id: newUserId }, JWT_SECRET, { expiresIn: '7d' });
@@ -80,6 +81,7 @@ const newUser = new User({
     res.status(500).json({ message: '❌ Failed to create account with data' });
   }
 });
+
 
 // POST /migrate-user-data
 router.post('/migrate-user-data', async (req, res) => {
