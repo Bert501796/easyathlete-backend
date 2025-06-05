@@ -39,12 +39,16 @@ router.post('/exchange', async (req, res) => {
     }
 
     // 🔐 Store the stravaId and tokens in your User model
-await User.findOneAndUpdate({ customUserId: userId }, {
-      stravaId,
-      accessToken: access_token,
-      refreshToken: refresh_token,
-      tokenExpiresAt: expires_at
-    });
+await User.findOneAndUpdate(
+  { $or: [{ _id: userId }, { customUserId: userId }] },
+  {
+    stravaId,
+    accessToken,
+    refreshToken,
+    tokenExpiresAt: expires_at
+  },
+  { new: true } // Optional: return the updated document if you want to log it
+);
 
     console.log(`✅ Linked Strava athlete ${stravaId} to internal user ${userId}`);
 
