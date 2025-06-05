@@ -23,22 +23,21 @@ router.post('/compute-fitness-level', authenticate, async (req, res) => {
   }
 });
 
-router.get('/fitness-level', authenticate, async (req, res) => {
+router.get('/fitness-level', async (req, res) => {
+  const userId = req.query.userId; // 🧠 Add this line
+
+  if (!userId) return res.status(400).json({ error: 'Missing userId' });
+
   try {
-    const userId = req.user.id;
-
     const user = await User.findById(userId);
-    if (!user) {
-      return res.status(404).json({ error: 'User not found' });
-    }
+    if (!user) return res.status(404).json({ error: 'User not found' });
 
-    res.status(200).json({
-      fitnessLevel: user.fitnessLevel || 'Not yet classified'
-    });
+    res.status(200).json({ fitnessLevel: user.fitnessLevel || 'Not yet classified' });
   } catch (error) {
     console.error('Error retrieving fitness level:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
 });
+
 
 module.exports = router;
