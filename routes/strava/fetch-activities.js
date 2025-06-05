@@ -2,6 +2,10 @@ const express = require('express');
 const axios = require('axios');
 const { v4: uuidv4 } = require('uuid');
 const StravaActivity = require('../../models/StravaActivity');
+const { getStravaMetrics } = require('../../utils/dataFetchers');
+const { classifyFitnessLevel } = require('../../utils/fitnessClassifier');
+const User = require('../../models/User');
+
 const router = express.Router();
 
 const getHRZone = (hr, maxHr = 190) => {
@@ -105,6 +109,17 @@ router.post('/fetch-activities', async (req, res) => {
         }
       })
     );
+
+    // ✅ Compute fitness level after storing all activities
+    try {
+      const metrics = await getStravaMetrics(userId);
+      const fitnessLevel = classifyFitnessLevel(metrics);
+      await User.updateOne({ _id: userId }, { fitnessLevel });
+
+      console.log(`✅ Updated fitness level to ${fitnessLevel} for user ${userId}`);
+    } catch (fitnessErr) {
+      console.error(`❌ Fitness classification failed for ${userId}`, fitnessErr);
+    }
 
     return res.status(200).json({
       message: '✅ Activities enriched and stored in MongoDB',

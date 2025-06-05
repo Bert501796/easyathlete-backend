@@ -12,6 +12,8 @@ const onboardingBot = require('./routes/onboardingBot');
 const trainingScheduleRoute = require('./routes/trainingSchedule');
 const userRoutes = require('./routes/user');
 const authRoutes = require('./routes/auth/auth');
+const fitnessRoutes = require('./routes/fitness');
+
 
 const mongoose = require('mongoose');
 require('dotenv').config();
@@ -61,6 +63,7 @@ app.use('/strava', insightsRoute); // ✅ NEW: for insights from stravaactivitie
 app.use('/onboarding-bot', onboardingBot);
 app.use(trainingScheduleRoute);
 app.use('/user', userRoutes);
+app.use('/api/fitness', fitnessRoutes);
 
 app.get('/', (req, res) => {
   res.send('EasyAthlete API is running ✅');
