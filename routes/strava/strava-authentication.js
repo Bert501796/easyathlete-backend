@@ -52,10 +52,14 @@ router.post('/exchange', async (req, res) => {
       message: '✅ Strava account linked',
       access_token
     });
-  } catch (error) {
-    console.error('❌ Strava token exchange error:', error.response?.data || error.message);
-    return res.status(500).json({ error: 'Failed to exchange token with Strava' });
+} catch (error) {
+  if (error.response) {
+    console.error('❌ Strava token exchange error (response):', error.response.data);
+  } else {
+    console.error('❌ Strava token exchange error:', error.message);
   }
+  return res.status(500).json({ error: 'Failed to exchange token with Strava' });
+}
 });
 
 module.exports = router;
