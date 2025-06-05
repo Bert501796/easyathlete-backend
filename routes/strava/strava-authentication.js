@@ -1,7 +1,8 @@
+// routes/strava/strava-authentication.js
 const express = require('express');
 const axios = require('axios');
 const router = express.Router();
-const User = require('../../models/User'); // make sure this path is correct
+const User = require('../../models/User');
 
 const STRAVA_CLIENT_ID = process.env.STRAVA_CLIENT_ID;
 const STRAVA_CLIENT_SECRET = process.env.STRAVA_CLIENT_SECRET;
@@ -16,33 +17,41 @@ router.post('/exchange', async (req, res) => {
   try {
     console.log(`🔁 Exchanging Strava code for user: ${userId}`);
 
-    const tokenRes = await axios.post('https://www.strava.com/oauth/token', {
+    const response = await axios.post('https://www.strava.com/oauth/token', {
       client_id: STRAVA_CLIENT_ID,
       client_secret: STRAVA_CLIENT_SECRET,
       code,
       grant_type: 'authorization_code',
     });
 
-    const { access_token, refresh_token, expires_at } = tokenRes.data;
+    const {
+      access_token,
+      refresh_token,
+      expires_at,
+      athlete
+    } = response.data;
 
-    // 🔍 Get athlete info
-    const athleteRes = await axios.get('https://www.strava.com/api/v3/athlete', {
-      headers: { Authorization: `Bearer ${access_token}` },
-    });
+    const stravaId = athlete?.id;
 
-    const stravaAthleteId = athleteRes.data.id;
+    if (!stravaId) {
+      console.error('❌ Strava athlete ID not found in response');
+      return res.status(500).json({ error: 'Invalid athlete response from Strava' });
+    }
 
-    // 💾 Save stravaAthleteId to the user
+    // 🔐 Store the stravaId and tokens in your User model
     await User.findByIdAndUpdate(userId, {
-      stravaId: stravaAthleteId,
-      stravaAccessToken: access_token,
-      stravaRefreshToken: refresh_token,
-      stravaTokenExpiresAt: expires_at,
+      stravaId,
+      accessToken: access_token,
+      refreshToken: refresh_token,
+      tokenExpiresAt: expires_at
     });
 
-    console.log(`✅ Stored Strava athlete ID (${stravaAthleteId}) for user ${userId}`);
+    console.log(`✅ Linked Strava athlete ${stravaId} to internal user ${userId}`);
 
-    return res.status(200).json({ access_token });
+    return res.status(200).json({
+      message: '✅ Strava account linked',
+      access_token
+    });
   } catch (error) {
     console.error('❌ Strava token exchange error:', error.response?.data || error.message);
     return res.status(500).json({ error: 'Failed to exchange token with Strava' });
