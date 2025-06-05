@@ -5,7 +5,7 @@ const { classifyFitnessLevel } = require('../utils/fitnessClassifier');
 const { getStravaMetrics } = require('../utils/dataFetchers');
 
 // Middleware to authenticate user
-const authenticate = require('../middleware/authenticate');
+const authenticate = require('../middleware/auth');
 
 router.post('/compute-fitness-level', authenticate, async (req, res) => {
   try {
