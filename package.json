@@ -21,6 +21,7 @@
     "express": "^4.18.2",
     "fit-file-parser": "^1.21.0",
     "jsonwebtoken": "^9.0.2",
+    "moment": "^2.30.1",
     "mongoose": "^8.15.1",
     "multer": "^2.0.0",
     "multer-storage-cloudinary": "^4.0.0",
