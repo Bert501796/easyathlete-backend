@@ -53,13 +53,21 @@ router.post('/exchange', async (req, res) => {
       access_token
     });
 } catch (error) {
+  console.error('❌ Full error:', error.toJSON?.() || error.message);
+  console.error('❌ Error details:', {
+    code,
+    userId,
+    STRAVA_CLIENT_ID,
+    STRAVA_CLIENT_SECRET
+  });
   if (error.response) {
-    console.error('❌ Strava token exchange error (response):', error.response.data);
-  } else {
-    console.error('❌ Strava token exchange error:', error.message);
+    console.error('❌ Strava response data:', error.response.data);
+    console.error('❌ Strava status:', error.response.status);
+    console.error('❌ Strava headers:', error.response.headers);
   }
   return res.status(500).json({ error: 'Failed to exchange token with Strava' });
 }
+
 });
 
 module.exports = router;
