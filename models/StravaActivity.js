@@ -15,7 +15,13 @@ const stravaActivitySchema = new mongoose.Schema({
   averageHeartrate: Number,
   zoneDistribution: [Number],
   hrZoneBuckets: [Number],
-  raw: Object, // Optional: full Strava activity object
+  raw: Object,
 }, { timestamps: true });
+
+// 🔑 Compound index for upserts
+stravaActivitySchema.index({ userId: 1, stravaId: 1 }, { unique: true });
+
+// 📅 Index for sorting/filtering by date
+stravaActivitySchema.index({ userId: 1, startDate: -1 });
 
 module.exports = mongoose.model('StravaActivity', stravaActivitySchema);
