@@ -20,7 +20,7 @@ router.post('/webhook', async (req, res) => {
 
   if (event.object_type === 'activity' && event.aspect_type === 'create') {
     try {
-      const user = await User.findOne({ stravaAthleteId: event.owner_id });
+      const user = await User.findOne({ stravaId: event.owner_id });
       if (!user) {
         console.warn(`⚠️ No user found for Strava athlete ID ${event.owner_id}`);
         return res.sendStatus(200);
