@@ -39,7 +39,7 @@ router.post('/exchange', async (req, res) => {
     }
 
     // 🔐 Store the stravaId and tokens in your User model
-    await User.findByIdAndUpdate(userId, {
+await User.findOneAndUpdate({ customUserId: userId }, {
       stravaId,
       accessToken: access_token,
       refreshToken: refresh_token,

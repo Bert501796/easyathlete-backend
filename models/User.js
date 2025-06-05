@@ -1,15 +1,14 @@
 const mongoose = require('mongoose');
 
 const userSchema = new mongoose.Schema({
-  email: { type: String, required: true, unique: true },
-  password: { type: String, required: true },
   name: String,
-  createdAt: { type: Date, default: Date.now },
-  fitnessLevel: {
-    type: String,
-    enum: ['Beginner', 'Intermediate', 'Advanced'],
-    default: 'Beginner',
-  },
+  email: { type: String, unique: true },
+  passwordHash: String,
+  customUserId: { type: String, unique: true }, // ✅ This stores user_... from onboarding
+  stravaId: Number,
+  accessToken: String,
+  refreshToken: String,
+  tokenExpiresAt: Number
 });
 
 module.exports = mongoose.model('User', userSchema);
