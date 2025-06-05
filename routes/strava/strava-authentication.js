@@ -25,9 +25,9 @@ router.post('/exchange', async (req, res) => {
     });
 
     const {
-      access_token,
-      refresh_token,
-      expires_at,
+      access_token: accessToken,
+      refresh_token: refreshToken,
+      expires_at: tokenExpiresAt,
       athlete
     } = response.data;
 
@@ -38,40 +38,39 @@ router.post('/exchange', async (req, res) => {
       return res.status(500).json({ error: 'Invalid athlete response from Strava' });
     }
 
-    // 🔐 Store the stravaId and tokens in your User mode
-await User.findOneAndUpdate(
-  { $or: [{ _id: userId }, { customUserId: userId }] },
-  {
-    stravaId,
-    accessToken,
-    refreshToken,
-    tokenExpiresAt: expires_at
-  },
-  { new: true } // Optional: return the updated document if you want to log it
-);
+    // 🔐 Store stravaId and tokens in the correct user document
+    await User.findOneAndUpdate(
+      { $or: [{ _id: userId }, { customUserId: userId }] },
+      {
+        stravaId,
+        accessToken,
+        refreshToken,
+        tokenExpiresAt
+      },
+      { new: true }
+    );
 
     console.log(`✅ Linked Strava athlete ${stravaId} to internal user ${userId}`);
 
     return res.status(200).json({
       message: '✅ Strava account linked',
-      access_token
+      access_token: accessToken
     });
-} catch (error) {
-  console.error('❌ Full error:', error.toJSON?.() || error.message);
-  console.error('❌ Error details:', {
-    code,
-    userId,
-    STRAVA_CLIENT_ID,
-    STRAVA_CLIENT_SECRET
-  });
-  if (error.response) {
-    console.error('❌ Strava response data:', error.response.data);
-    console.error('❌ Strava status:', error.response.status);
-    console.error('❌ Strava headers:', error.response.headers);
+  } catch (error) {
+    console.error('❌ Full error:', error.toJSON?.() || error.message);
+    console.error('❌ Error details:', {
+      code,
+      userId,
+      STRAVA_CLIENT_ID,
+      STRAVA_CLIENT_SECRET
+    });
+    if (error.response) {
+      console.error('❌ Strava response data:', error.response.data);
+      console.error('❌ Strava status:', error.response.status);
+      console.error('❌ Strava headers:', error.response.headers);
+    }
+    return res.status(500).json({ error: 'Failed to exchange token with Strava' });
   }
-  return res.status(500).json({ error: 'Failed to exchange token with Strava' });
-}
-
 });
 
 module.exports = router;
