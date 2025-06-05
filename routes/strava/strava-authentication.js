@@ -38,7 +38,7 @@ router.post('/exchange', async (req, res) => {
       return res.status(500).json({ error: 'Invalid athlete response from Strava' });
     }
 
-    // 🔐 Store the stravaId and tokens in your User model
+    // 🔐 Store the stravaId and tokens in your User mode
 await User.findOneAndUpdate(
   { $or: [{ _id: userId }, { customUserId: userId }] },
   {

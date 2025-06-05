@@ -59,7 +59,7 @@ router.post('/signup-with-data', async (req, res) => {
       email,
       password: hashedPassword,
       name,
-      customUserId: oldUserId // ✅ key addition
+      customUserId: oldUserId // 🧠 preserve original temp userId
     });
     await newUser.save();
 
