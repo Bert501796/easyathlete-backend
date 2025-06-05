@@ -13,6 +13,8 @@ const trainingScheduleRoute = require('./routes/trainingSchedule');
 const userRoutes = require('./routes/user');
 const authRoutes = require('./routes/auth/auth');
 const fitnessRoutes = require('./routes/fitness');
+const stravaWebhook = require('./routes/strava/strava-webhook');
+
 
 
 const mongoose = require('mongoose');
@@ -64,6 +66,8 @@ app.use('/onboarding-bot', onboardingBot);
 app.use(trainingScheduleRoute);
 app.use('/user', userRoutes);
 app.use('/api/fitness', fitnessRoutes);
+app.use('/strava', stravaWebhook);
+
 
 app.get('/', (req, res) => {
   res.send('EasyAthlete API is running ✅');
