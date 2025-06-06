@@ -11,15 +11,20 @@ router.get('/insights/:userId', async (req, res) => {
     const activities = await StravaActivity.find({ userId });
 
     const normalized = activities.map((a) => {
-  const zoneSeconds = a.hrZoneBuckets || [];
-  const totalZoneTime = zoneSeconds.reduce((sum, val) => sum + val, 0) || 1;
+      const zoneSeconds = a.hrZoneBuckets || [0, 0, 0, 0, 0];
+      const totalZoneTime = zoneSeconds.reduce((sum, val) => sum + val, 0) || 1;
 
-  return {
-    ...a._doc,
-//    type: a.type === 'VirtualRide' ? 'Ride' : a.type,
-
-  };
-});
+      return {
+        ...a._doc,
+        zone1: +(zoneSeconds[0] / totalZoneTime * 100).toFixed(1),
+        zone2: +(zoneSeconds[1] / totalZoneTime * 100).toFixed(1),
+        zone3: +(zoneSeconds[2] / totalZoneTime * 100).toFixed(1),
+        zone4: +(zoneSeconds[3] / totalZoneTime * 100).toFixed(1),
+        zone5: +(zoneSeconds[4] / totalZoneTime * 100).toFixed(1),
+        // Optional: Normalize activity type here if needed
+        // type: a.type === 'VirtualRide' ? 'Ride' : a.type
+      };
+    });
 
     res.status(200).json(normalized);
   } catch (error) {
