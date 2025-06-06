@@ -32,14 +32,13 @@ router.post('/exchange', async (req, res) => {
     } = response.data;
 
     const stravaId = athlete?.id;
-
     if (!stravaId) {
       console.error('❌ Strava athlete ID not found in response');
       return res.status(500).json({ error: 'Invalid athlete response from Strava' });
     }
 
-    // ✅ Attempt to update user by customUserId (not _id)
-    const updatedUser = await User.findOneAndUpdate(
+    // Try to update existing user
+    let updatedUser = await User.findOneAndUpdate(
       { customUserId: userId },
       {
         stravaId,
@@ -50,19 +49,24 @@ router.post('/exchange', async (req, res) => {
       { new: true }
     );
 
-    // ❗ If no user found, log it
     if (!updatedUser) {
-      console.error(`❌ No user found for customUserId: ${userId}`);
-      return res.status(404).json({ error: 'User not found' });
+      // Create temporary user if not found
+      updatedUser = await User.create({
+        customUserId: userId,
+        stravaId,
+        accessToken,
+        refreshToken,
+        tokenExpiresAt
+      });
+      console.warn(`⚠️ Created temporary user with customUserId: ${userId}`);
     }
 
-    console.log(`✅ Linked Strava athlete ${stravaId} to user ${updatedUser.email}`);
+    console.log(`✅ Linked Strava athlete ${stravaId} to user ${updatedUser._id}`);
 
     return res.status(200).json({
       message: '✅ Strava account linked',
       access_token: accessToken
     });
-
   } catch (error) {
     console.error('❌ Full error:', error.toJSON?.() || error.message);
     console.error('❌ Error details:', {
@@ -75,7 +79,6 @@ router.post('/exchange', async (req, res) => {
     if (error.response) {
       console.error('❌ Strava response data:', error.response.data);
       console.error('❌ Strava status:', error.response.status);
-      console.error('❌ Strava headers:', error.response.headers);
     }
 
     return res.status(500).json({ error: 'Failed to exchange token with Strava' });
