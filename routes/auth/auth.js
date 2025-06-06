@@ -5,7 +5,7 @@ const User = require('../../models/User');
 const OnboardingResponse = require('../../models/OnboardingResponse');
 const TrainingSchedule = require('../../models/TrainingSchedule');
 const AiPrompt = require('../../models/AiPrompt');
-const StravaActivity = require('../../models/StravaActivity'); // ✅ make sure this is here
+const StravaActivity = require('../../models/StravaActivity');
 
 const router = express.Router();
 const JWT_SECRET = process.env.JWT_SECRET || 'dev-secret-key';
@@ -14,6 +14,10 @@ const JWT_SECRET = process.env.JWT_SECRET || 'dev-secret-key';
 router.post('/signup', async (req, res) => {
   try {
     const { email, password, name } = req.body;
+    if (!email || !password || !name) {
+      return res.status(400).json({ message: '❌ Email, name, and password are required' });
+    }
+
     const existingUser = await User.findOne({ email });
     if (existingUser) return res.status(400).json({ message: '❌ Email already exists' });
 
@@ -32,8 +36,14 @@ router.post('/signup', async (req, res) => {
 router.post('/login', async (req, res) => {
   try {
     const { email, password } = req.body;
+    if (!email || !password) {
+      return res.status(400).json({ message: '❌ Email and password are required' });
+    }
+
     const user = await User.findOne({ email });
-    if (!user) return res.status(404).json({ message: '❌ User not found' });
+    if (!user || !user.password) {
+      return res.status(401).json({ message: '❌ Invalid credentials (missing user or password)' });
+    }
 
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) return res.status(401).json({ message: '❌ Invalid credentials' });
@@ -49,17 +59,19 @@ router.post('/login', async (req, res) => {
 router.post('/signup-with-data', async (req, res) => {
   try {
     const { email, password, name, userId: oldUserId } = req.body;
-    if (!oldUserId) return res.status(400).json({ message: 'Missing userId' });
+    if (!email || !password || !name || !oldUserId) {
+      return res.status(400).json({ message: '❌ Email, name, password, and userId are required' });
+    }
 
     const existingUser = await User.findOne({ email });
-    if (existingUser) return res.status(400).json({ message: 'Email already in use' });
+    if (existingUser) return res.status(400).json({ message: '❌ Email already in use' });
 
     const hashedPassword = await bcrypt.hash(password, 10);
     const newUser = new User({
       email,
       password: hashedPassword,
       name,
-      customUserId: oldUserId // 🧠 preserve original temp userId
+      customUserId: oldUserId
     });
     await newUser.save();
 
@@ -82,11 +94,12 @@ router.post('/signup-with-data', async (req, res) => {
   }
 });
 
-
 // POST /migrate-user-data
 router.post('/migrate-user-data', async (req, res) => {
   const { oldUserId, newUserId } = req.body;
-  if (!oldUserId || !newUserId) return res.status(400).json({ error: 'Missing oldUserId or newUserId' });
+  if (!oldUserId || !newUserId) {
+    return res.status(400).json({ error: '❌ Missing oldUserId or newUserId' });
+  }
 
   try {
     const updateConditions = { userId: oldUserId };
@@ -96,7 +109,7 @@ router.post('/migrate-user-data', async (req, res) => {
       OnboardingResponse.updateMany(updateConditions, updateAction),
       AiPrompt.updateMany(updateConditions, updateAction),
       TrainingSchedule.updateMany(updateConditions, updateAction),
-      StravaActivity.updateMany(updateConditions, updateAction) // ✅ include in manual migration too
+      StravaActivity.updateMany(updateConditions, updateAction)
     ]);
 
     res.status(200).json({
@@ -124,7 +137,7 @@ router.delete('/:userId', async (req, res) => {
       OnboardingResponse.deleteMany({ userId }),
       AiPrompt.deleteMany({ userId }),
       TrainingSchedule.deleteMany({ userId }),
-      StravaActivity.deleteMany({ userId }) // ✅ delete activities
+      StravaActivity.deleteMany({ userId })
     ]);
 
     res.status(200).json({
