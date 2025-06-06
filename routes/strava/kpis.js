@@ -1,4 +1,3 @@
-// routes/strava/kpis.js
 const express = require('express');
 const router = express.Router();
 const StravaActivity = require('../../models/StravaActivity');
@@ -14,9 +13,31 @@ const getRollingAverage = (data, windowSize) => {
 
 router.get('/insights/kpis/:userId', async (req, res) => {
   const { userId } = req.params;
+  const { days, type } = req.query;
 
   try {
-    const activities = await StravaActivity.find({ userId }).sort({ startDate: 1 });
+    const now = new Date();
+    let fromDate = null;
+
+    if (days) {
+      const parsedDays = parseInt(days, 10);
+      if (!isNaN(parsedDays)) {
+        fromDate = new Date(now.getTime() - parsedDays * 24 * 60 * 60 * 1000);
+      }
+    }
+
+    const query = { userId };
+
+    if (fromDate) {
+      query.startDate = { $gte: fromDate };
+    }
+
+    if (type && type !== 'All') {
+      query.type = type;
+    }
+
+    const activities = await StravaActivity.find(query).sort({ startDate: 1 });
+
     if (!activities.length) return res.status(200).json({ message: 'No activities found', kpis: {} });
 
     // Prepare time series buckets by week
