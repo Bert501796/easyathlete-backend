@@ -11,7 +11,7 @@ const getRollingAverage = (data, windowSize) => {
   });
 };
 
-router.get('/insights/kpis/:userId', async (req, res) => {
+router.get('/kpis/:userId', async (req, res) => {
   const { userId } = req.params;
   const { days, type } = req.query;
 
