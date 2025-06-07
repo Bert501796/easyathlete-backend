@@ -67,13 +67,22 @@ router.post('/signup-with-data', async (req, res) => {
     if (existingUser) return res.status(400).json({ message: '❌ Email already in use' });
 
     const hashedPassword = await bcrypt.hash(password, 10);
-    const newUser = new User({
-      email,
-      passwordHash: hashedPassword,
-      name,
-      customUserId: oldUserId
-    });
-    await newUser.save();
+    let newUser = await User.findOne({ customUserId: oldUserId });
+
+if (newUser) {
+  newUser.email = email;
+  newUser.passwordHash = hashedPassword;
+  newUser.name = name;
+  await newUser.save();
+} else {
+  newUser = new User({
+    email,
+    passwordHash: hashedPassword,
+    name,
+    customUserId: oldUserId
+  });
+  await newUser.save();
+}
 
     const newUserId = newUser._id;
     const updateConditions = { userId: oldUserId };
