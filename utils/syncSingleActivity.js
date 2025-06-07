@@ -13,6 +13,30 @@ const getHRZone = (hr, maxHr = 190) => {
   return 5;
 };
 
+const getAccessToken = async (user) => {
+  const now = Math.floor(Date.now() / 1000);
+  if (user.tokenExpiresAt > now) return user.accessToken;
+
+  console.log(`🔄 Token expired for user ${user._id}. Refreshing...`);
+
+  const res = await axios.post('https://www.strava.com/oauth/token', {
+    client_id: process.env.STRAVA_CLIENT_ID,
+    client_secret: process.env.STRAVA_CLIENT_SECRET,
+    grant_type: 'refresh_token',
+    refresh_token: user.refreshToken
+  });
+
+  const { access_token, refresh_token, expires_at } = res.data;
+
+  await User.updateOne({ _id: user._id }, {
+    accessToken: access_token,
+    refreshToken: refresh_token,
+    tokenExpiresAt: expires_at
+  });
+
+  return access_token;
+};
+
 const enrichActivity = async (activity, accessToken) => {
   let zoneDistribution = [];
   let hrZoneBuckets = [];
@@ -60,7 +84,7 @@ const enrichActivity = async (activity, accessToken) => {
 };
 
 const syncSingleActivity = async ({ stravaActivityId, user }) => {
-  const accessToken = user.stravaAccessToken;
+  const accessToken = await getAccessToken(user);
 
   let activityRes;
   try {

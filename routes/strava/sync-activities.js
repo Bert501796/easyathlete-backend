@@ -1,6 +1,3 @@
-// This file is triggered when syncing Strava data manually (e.g., on login or refresh).
-// It fetches all new activities after lastSyncDate and uses syncSingleActivity() to enrich + store them.
-
 const express = require('express');
 const axios = require('axios');
 const User = require('../../models/User');
@@ -11,14 +8,44 @@ const { classifyFitnessLevel } = require('../../utils/fitnessClassifier');
 
 const router = express.Router();
 
-router.post('/sync-activities', async (req, res) => {
-  const { accessToken, userId, lastSyncDate } = req.body;
+// Token refresher logic (same as in syncSingleActivity)
+const getAccessToken = async (user) => {
+  const now = Math.floor(Date.now() / 1000);
+  if (user.tokenExpiresAt > now) return user.accessToken;
 
-  if (!accessToken || !userId) {
-    return res.status(400).json({ error: 'Missing accessToken or userId' });
+  console.log(`🔄 Token expired for user ${user._id}. Refreshing...`);
+
+  const res = await axios.post('https://www.strava.com/oauth/token', {
+    client_id: process.env.STRAVA_CLIENT_ID,
+    client_secret: process.env.STRAVA_CLIENT_SECRET,
+    grant_type: 'refresh_token',
+    refresh_token: user.refreshToken
+  });
+
+  const { access_token, refresh_token, expires_at } = res.data;
+
+  await User.updateOne({ _id: user._id }, {
+    accessToken: access_token,
+    refreshToken: refresh_token,
+    tokenExpiresAt: expires_at
+  });
+
+  return access_token;
+};
+
+router.post('/sync-activities', async (req, res) => {
+  const { userId, lastSyncDate } = req.body;
+
+  if (!userId) {
+    return res.status(400).json({ error: 'Missing userId' });
   }
 
   try {
+    const user = await User.findById(userId);
+    if (!user) return res.status(404).json({ error: 'User not found' });
+
+    const accessToken = await getAccessToken(user);
+
     const afterTimestamp = lastSyncDate
       ? Math.floor(new Date(lastSyncDate).getTime() / 1000)
       : Math.floor((Date.now() - 3 * 24 * 60 * 60 * 1000) / 1000); // Default: 3 days ago
