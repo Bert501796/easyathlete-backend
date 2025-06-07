@@ -1,10 +1,10 @@
 const mongoose = require('mongoose');
 
 const userSchema = new mongoose.Schema({
-  name: String,
-  email: { type: String, unique: true },
-  passwordHash: String,
-  customUserId: { type: String, unique: true }, // ✅ This stores user_... from onboarding
+  name: { type: String, required: true },
+  email: { type: String, unique: true, required: true },
+  passwordHash: { type: String, required: true }, // Only hashed version stored
+  customUserId: { type: String, unique: true },    // For tracking onboarding flow users
   stravaId: Number,
   accessToken: String,
   refreshToken: String,

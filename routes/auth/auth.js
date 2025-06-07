@@ -22,7 +22,7 @@ router.post('/signup', async (req, res) => {
     if (existingUser) return res.status(400).json({ message: '❌ Email already exists' });
 
     const hashedPassword = await bcrypt.hash(password, 10);
-    const newUser = new User({ email, password: hashedPassword, name });
+    const newUser = new User({ email, passwordHash: hashedPassword, name });
     await newUser.save();
 
     const token = jwt.sign({ id: newUser._id }, JWT_SECRET, { expiresIn: '7d' });
@@ -41,11 +41,11 @@ router.post('/login', async (req, res) => {
     }
 
     const user = await User.findOne({ email });
-    if (!user || !user.password) {
+    if (!user || !user.passwordHash) {
       return res.status(401).json({ message: '❌ Invalid credentials (missing user or password)' });
     }
 
-    const isMatch = await bcrypt.compare(password, user.password);
+    const isMatch = await bcrypt.compare(password, user.passwordHash);
     if (!isMatch) return res.status(401).json({ message: '❌ Invalid credentials' });
 
     const token = jwt.sign({ id: user._id }, JWT_SECRET, { expiresIn: '7d' });
@@ -69,7 +69,7 @@ router.post('/signup-with-data', async (req, res) => {
     const hashedPassword = await bcrypt.hash(password, 10);
     const newUser = new User({
       email,
-      password: hashedPassword,
+      passwordHash: hashedPassword,
       name,
       customUserId: oldUserId
     });
