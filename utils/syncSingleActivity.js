@@ -133,12 +133,12 @@ const syncSingleActivity = async ({ stravaActivityId, user }) => {
     { upsert: true, new: true }
   );
 
-  // Optional: Update fitness level
-  const metrics = await getStravaMetrics(user._id);
-  const fitnessLevel = classifyFitnessLevel(metrics);
-  await User.updateOne({ _id: user._id }, { fitnessLevel });
+  // // Optional: Update fitness level
+  // const metrics = await getStravaMetrics(user._id);
+  // const fitnessLevel = classifyFitnessLevel(metrics);
+  // await User.updateOne({ _id: user._id }, { fitnessLevel });
 
-  return enriched.id;
+  // return enriched.id;
 };
 
 module.exports = { syncSingleActivity };

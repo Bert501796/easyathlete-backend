@@ -81,14 +81,14 @@ router.post('/sync-activities', async (req, res) => {
     );
 
     // Step 3: Update fitness level
-    try {
-      const metrics = await getStravaMetrics(userId);
-      const fitnessLevel = classifyFitnessLevel(metrics);
-      await User.updateOne({ _id: userId }, { fitnessLevel });
-      console.log(`✅ Updated fitness level to ${fitnessLevel} for user ${userId}`);
-    } catch (fitnessErr) {
-      console.error(`❌ Fitness classification failed for ${userId}`, fitnessErr);
-    }
+    // try {
+    //   const metrics = await getStravaMetrics(userId);
+    //   const fitnessLevel = classifyFitnessLevel(metrics);
+    //   await User.updateOne({ _id: userId }, { fitnessLevel });
+    //   console.log(`✅ Updated fitness level to ${fitnessLevel} for user ${userId}`);
+    // } catch (fitnessErr) {
+    //   console.error(`❌ Fitness classification failed for ${userId}`, fitnessErr);
+    // }
 
     return res.status(200).json({
       message: '✅ Synced and enriched new activities',
