@@ -62,10 +62,28 @@ const enrichActivity = async (activity, accessToken) => {
 const syncSingleActivity = async ({ stravaActivityId, user }) => {
   const accessToken = user.stravaAccessToken;
 
-  const activityRes = await axios.get(
-    `https://www.strava.com/api/v3/activities/${stravaActivityId}`,
-    { headers: { Authorization: `Bearer ${accessToken}` } }
-  );
+  let activityRes;
+  try {
+    activityRes = await axios.get(
+      `https://www.strava.com/api/v3/activities/${stravaActivityId}`,
+      {
+        headers: { Authorization: `Bearer ${accessToken}` }
+      }
+    );
+  } catch (err) {
+    console.error(`❌ Webhook error for activity ${stravaActivityId}`);
+    if (err.response) {
+      console.error('Status:', err.response.status);
+      console.error('Status Text:', err.response.statusText);
+      console.error('Response Data:', err.response.data);
+    } else if (err.request) {
+      console.error('❌ No response received from Strava:', err.request);
+    } else {
+      console.error('❌ Error setting up request:', err.message);
+    }
+    console.error('🔑 Token used (truncated):', accessToken?.slice(0, 8), '...');
+    throw err;
+  }
 
   const enriched = await enrichActivity(activityRes.data, accessToken);
 
