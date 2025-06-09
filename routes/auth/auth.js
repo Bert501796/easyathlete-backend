@@ -26,7 +26,7 @@ router.post('/signup', async (req, res) => {
     await newUser.save();
 
     const token = jwt.sign({ id: newUser._id }, JWT_SECRET, { expiresIn: '7d' });
-    res.status(201).json({ message: '✅ Signup successful', token, userId: newUser._id });
+    res.status(201).json({ message: '✅ Signup successful', token, userId: newUser._id, stravaId });
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
@@ -49,7 +49,7 @@ router.post('/login', async (req, res) => {
     if (!isMatch) return res.status(401).json({ message: '❌ Invalid credentials' });
 
     const token = jwt.sign({ id: user._id }, JWT_SECRET, { expiresIn: '7d' });
-    res.json({ message: '✅ Login successful', token, userId: user._id });
+    res.json({ message: '✅ Login successful', token, userId: user._id, stravaId });
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
@@ -96,7 +96,7 @@ if (newUser) {
     ]);
 
     const token = jwt.sign({ id: newUserId }, JWT_SECRET, { expiresIn: '7d' });
-    res.status(201).json({ message: '✅ Account created with migrated data', token, userId: newUserId });
+    res.status(201).json({ message: '✅ Account created with migrated data', token, userId: newUserId, stravaId });
   } catch (err) {
     console.error('❌ Signup-with-data failed:', err);
     res.status(500).json({ message: '❌ Failed to create account with data' });
