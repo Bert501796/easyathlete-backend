@@ -106,7 +106,12 @@ if (newUser) {
     ]);
 
     const token = jwt.sign({ id: newUserId }, JWT_SECRET, { expiresIn: '7d' });
-    res.status(201).json({ message: '✅ Account created with migrated data', token, userId: newUserId, stravaId });
+res.status(201).json({
+  message: '✅ Account created with migrated data',
+  token,
+  userId: newUserId,
+  stravaId: newUser.stravaId || null  // ✅ safely include if it exists
+});
   } catch (err) {
     console.error('❌ Signup-with-data failed:', err);
     res.status(500).json({ message: '❌ Failed to create account with data' });
