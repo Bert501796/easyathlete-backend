@@ -16,12 +16,31 @@ router.post('/fetch-activities', async (req, res) => {
 
   try {
     // Step 1: Fetch activities
-    const activityRes = await axios.get('https://www.strava.com/api/v3/athlete/activities', {
-      headers: { Authorization: `Bearer ${accessToken}` },
-      params: { per_page: 50, page: 1 }
-    });
+let page = 1;
+let allActivities = [];
 
-    const baseActivities = activityRes.data;
+while (true) {
+  const { data } = await axios.get('https://www.strava.com/api/v3/athlete/activities', {
+    headers: { Authorization: `Bearer ${accessToken}` },
+    params: { per_page: 100, page }
+  });
+
+  if (data.length === 0) break; // no more data
+
+  allActivities = allActivities.concat(data);
+  page += 1;
+}
+
+const baseActivities = allActivities;
+
+    //Below code only fetches the first 50 activities.
+    // const activityRes = await axios.get('https://www.strava.com/api/v3/athlete/activities', {
+    //   headers: { Authorization: `Bearer ${accessToken}` },
+    //   params: { per_page: 50, page: 1 }
+    // });
+
+    // const baseActivities = activityRes.data;
+    
 
     // Step 2: Enrich and store each activity
     const enrichedAndSaved = await Promise.all(
