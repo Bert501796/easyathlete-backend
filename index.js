@@ -72,8 +72,7 @@ app.use('/api/fitness', fitnessRoutes);
 app.use('/strava', stravaWebhook);
 app.use('/strava', syncActivities);       // handles /strava/sync-activities
 app.use('/strava', kpisRoute);
-app.use('api/analysis', analysisRoutes);
-
+app.use('/api/analysis', analysisRoutes);
 
 app.get('/', (req, res) => {
   res.send('EasyAthlete API is running ✅');
