@@ -1,8 +1,13 @@
 const StravaActivity = require('../models/StravaActivity');
 
-const getWeeklyTrainingSummary = async (userId) => {
+const getWeeklyTrainingSummary = async (userId, type = null) => {
+  const matchStage = { userId };
+  if (type) {
+    matchStage.type = type; // "Run", "Ride", etc.
+  }
+
   const pipeline = [
-    { $match: { userId } },
+    { $match: matchStage },
     {
       $addFields: {
         week: { $isoWeek: "$startDate" },
