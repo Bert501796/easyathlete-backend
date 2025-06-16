@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { getWeeklyTrainingSummary } = require('../utils/aggregateWeeklyTraining');
+const { getWeeklyTrainingSummary } = require('../../utils/aggregateWeeklyTraining');
 
 router.get('/weekly-summary/:userId', async (req, res) => {
   try {
