@@ -17,7 +17,7 @@ const stravaWebhook = require('./routes/strava/strava-webhook');
 const syncActivities = require('./routes/strava/sync-activities');
 const kpisRoute = require('./routes/strava/kpis');
 const analysisRoutes = require('./routes/strava/analysis');
-
+const exportRoute = require('./routes/admin/export');
 
 
 const mongoose = require('mongoose');
@@ -73,6 +73,7 @@ app.use('/strava', stravaWebhook);
 app.use('/strava', syncActivities);       // handles /strava/sync-activities
 app.use('/strava', kpisRoute);
 app.use('/api/analysis', analysisRoutes);
+app.use('/api/export', exportRoute);
 
 app.get('/', (req, res) => {
   res.send('EasyAthlete API is running ✅');
