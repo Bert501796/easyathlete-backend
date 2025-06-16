@@ -1,7 +1,7 @@
 // /routes/analysis.js
 const express = require('express');
 const router = express.Router();
-const StravaActivity = require('../models/StravaActivity');
+const StravaActivity = require('../../models/StravaActivity');
 
 router.get('/weekly-summary/:userId', async (req, res) => {
   try {
