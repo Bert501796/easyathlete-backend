@@ -8,10 +8,18 @@ const { getStravaMetrics } = require('../../utils/dataFetchers');
 const { classifyFitnessLevel } = require('../../utils/fitnessClassifier');
 const { fetchAthleteProfile } = require('../../utils/fetchAthleteProfile');
 
+let currentlyProcessing = false; // 🚦 Prevent concurrent fetch calls
+
 router.post('/fetch-activities', async (req, res) => {
+  if (currentlyProcessing) {
+    return res.status(429).json({ error: 'Another fetch is in progress. Please wait.' });
+  }
+  currentlyProcessing = true;
+
   const { accessToken, userId, forceRefetch, testActivityId } = req.body;
 
   if (!accessToken || !userId) {
+    currentlyProcessing = false;
     return res.status(400).json({ error: 'Missing accessToken or userId' });
   }
 
@@ -91,6 +99,8 @@ router.post('/fetch-activities', async (req, res) => {
   } catch (error) {
     console.error('❌ Fetch error:', error.response?.data || error.message);
     return res.status(500).json({ error: 'Failed to fetch and store activities' });
+  } finally {
+    currentlyProcessing = false;
   }
 });
 
