@@ -85,4 +85,63 @@ router.post('/exchange', async (req, res) => {
   }
 });
 
+router.post('/refresh-token', async (req, res) => {
+  const { userId } = req.body;
+
+  if (!userId) {
+    return res.status(400).json({ error: 'Missing userId' });
+  }
+
+  try {
+    const user = await User.findById(userId);
+
+    if (!user || !user.refreshToken || !user.tokenExpiresAt) {
+      return res.status(404).json({ error: 'Refresh token or expiry not found for user' });
+    }
+
+    const now = Math.floor(Date.now() / 1000); // current time in seconds
+
+    if (user.tokenExpiresAt > now) {
+      return res.status(200).json({
+        message: 'Access token still valid',
+        accessToken: user.accessToken,
+        refreshed: false
+      });
+    }
+
+    // 🔁 Exchange refresh token for new access token
+    const response = await axios.post('https://www.strava.com/api/v3/oauth/token', {
+      client_id: process.env.STRAVA_CLIENT_ID,
+      client_secret: process.env.STRAVA_CLIENT_SECRET,
+      grant_type: 'refresh_token',
+      refresh_token: user.refreshToken
+    });
+
+    const {
+      access_token: newAccessToken,
+      refresh_token: newRefreshToken,
+      expires_at: newExpiresAt
+    } = response.data;
+
+    // ⏫ Update user tokens
+    await User.updateOne(
+      { _id: userId },
+      {
+        accessToken: newAccessToken,
+        refreshToken: newRefreshToken,
+        tokenExpiresAt: newExpiresAt
+      }
+    );
+
+    return res.status(200).json({
+      message: 'Access token refreshed',
+      accessToken: newAccessToken,
+      refreshed: true
+    });
+  } catch (error) {
+    console.error('❌ Error refreshing token:', error.response?.data || error.message);
+    return res.status(500).json({ error: 'Failed to refresh token' });
+  }
+});
+
 module.exports = router;

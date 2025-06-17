@@ -15,6 +15,7 @@ const authRoutes = require('./routes/auth/auth');
 const fitnessRoutes = require('./routes/fitness');
 const stravaWebhook = require('./routes/strava/strava-webhook');
 const syncActivities = require('./routes/strava/sync-activities');
+const stravaAuthRoute = require('./routes/strava/strava-authentication');
 const kpisRoute = require('./routes/strava/kpis');
 const analysisRoutes = require('./routes/strava/analysis');
 const exportRoute = require('./routes/admin/export');
@@ -72,6 +73,7 @@ app.use('/api/fitness', fitnessRoutes);
 app.use('/strava', stravaWebhook);
 app.use('/strava', syncActivities);       // handles /strava/sync-activities
 app.use('/strava', kpisRoute);
+app.use('/strava', stravaAuthRoute);
 app.use('/api/analysis', analysisRoutes);
 app.use('/api/export', exportRoute);
 app.use('/api/admin', refetch);
