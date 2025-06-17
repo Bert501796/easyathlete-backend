@@ -7,6 +7,7 @@ const { saveActivity } = require('../../utils/saveActivity');
 const { getStravaMetrics } = require('../../utils/dataFetchers');
 const { classifyFitnessLevel } = require('../../utils/fitnessClassifier');
 const { fetchAthleteProfile } = require('../../utils/fetchAthleteProfile');
+const pLimit = require('p-limit');
 
 router.post('/fetch-activities', async (req, res) => {
   const { accessToken, userId, forceRefetch, testActivityId } = req.body;
@@ -16,6 +17,7 @@ router.post('/fetch-activities', async (req, res) => {
   }
 
   const MAX_ACTIVITIES = 900;
+  const limit = pLimit(5); // Max 5 concurrent enrich+save operations
 
   // Step 0: Optionally fetch profile info if missing birthYear
   const user = await User.findById(userId);
@@ -50,21 +52,24 @@ router.post('/fetch-activities', async (req, res) => {
         }
 
         page += 1;
+        await new Promise(resolve => setTimeout(resolve, 300)); // Optional: rate limit pacing
       }
     }
 
-    // Step 2: Enrich and store
+    // Step 2: Enrich and store with controlled concurrency
     const enrichedAndSaved = await Promise.all(
-      activities.map(async (activity) => {
-        try {
-          const enriched = await enrichActivity(activity, accessToken);
-          await saveActivity(enriched, userId);
-          return enriched.id;
-        } catch (err) {
-          console.warn(`❌ Failed to process activity ${activity.id}:`, err.message);
-          return null;
-        }
-      })
+      activities.map(activity =>
+        limit(async () => {
+          try {
+            const enriched = await enrichActivity(activity, accessToken);
+            await saveActivity(enriched, userId);
+            return enriched.id;
+          } catch (err) {
+            console.warn(`❌ Failed to process activity ${activity.id}:`, err.message);
+            return null;
+          }
+        })
+      )
     );
 
     // Step 3: Recalculate fitness level

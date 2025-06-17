@@ -28,6 +28,7 @@
     "multer-storage-cloudinary": "^4.0.0",
     "node-fetch": "^3.3.2",
     "openai": "^4.103.0",
+    "p-limit": "^6.2.0",
     "streamifier": "^0.1.1",
     "uuid": "^11.1.0"
   }
