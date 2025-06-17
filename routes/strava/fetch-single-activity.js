@@ -3,6 +3,8 @@ const axios = require('axios');
 const router = express.Router();
 const { enrichActivity } = require('../../utils/enrichActivity');
 const { saveActivity } = require('../../utils/saveActivity');
+const StravaActivity = require('../../models/StravaActivity');
+
 
 router.post('/fetch-single-activity', async (req, res) => {
   const { userId, activityId, accessToken } = req.body;
