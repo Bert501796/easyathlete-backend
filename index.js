@@ -87,6 +87,16 @@ const startServer = async () => {
     app.get('/', (req, res) => {
       res.send('EasyAthlete API is running ✅');
     });
+    
+    app.get('/health', async (req, res) => {
+  try {
+    const dbState = mongoose.connection.readyState === 1 ? 'connected' : 'disconnected';
+    res.status(200).json({ status: 'ok', db: dbState });
+  } catch (err) {
+    res.status(500).json({ status: 'error', error: err.message });
+  }
+});
+
 
     app.listen(PORT, () => {
       console.log(`✅ EasyAthlete API running on http://localhost:${PORT}`);
