@@ -15,7 +15,6 @@ const authRoutes = require('./routes/auth/auth');
 const fitnessRoutes = require('./routes/fitness');
 const stravaWebhook = require('./routes/strava/strava-webhook');
 const syncActivities = require('./routes/strava/sync-activities');
-const stravaAuthRoute = require('./routes/strava/strava-authentication');
 const kpisRoute = require('./routes/strava/kpis');
 const analysisRoutes = require('./routes/strava/analysis');
 const exportRoute = require('./routes/admin/export');
