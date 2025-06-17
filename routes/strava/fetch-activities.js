@@ -15,6 +15,8 @@ router.post('/fetch-activities', async (req, res) => {
     return res.status(400).json({ error: 'Missing accessToken or userId' });
   }
 
+  const MAX_ACTIVITIES = 900;
+
   // Step 0: Optionally fetch profile info if missing birthYear
   const user = await User.findById(userId);
   if (user && (!user.birthYear || forceRefetch)) {
@@ -25,22 +27,28 @@ router.post('/fetch-activities', async (req, res) => {
     let activities = [];
 
     if (testActivityId) {
-      // 🔍 Fetch a single specific activity by ID
       console.log(`🔎 Fetching single test activity: ${testActivityId}`);
       const { data } = await axios.get(`https://www.strava.com/api/v3/activities/${testActivityId}`, {
         headers: { Authorization: `Bearer ${accessToken}` }
       });
       activities = [data];
     } else {
-      // 🔁 Fetch all activities (default behavior)
+      // 🔁 Fetch up to MAX_ACTIVITIES
       let page = 1;
-      while (true) {
+      while (activities.length < MAX_ACTIVITIES) {
         const { data } = await axios.get('https://www.strava.com/api/v3/athlete/activities', {
           headers: { Authorization: `Bearer ${accessToken}` },
           params: { per_page: 100, page }
         });
+
         if (data.length === 0) break;
         activities = activities.concat(data);
+
+        if (activities.length >= MAX_ACTIVITIES) {
+          activities = activities.slice(0, MAX_ACTIVITIES);
+          break;
+        }
+
         page += 1;
       }
     }
