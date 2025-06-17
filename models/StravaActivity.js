@@ -38,3 +38,4 @@ stravaActivitySchema.index({ userId: 1, stravaId: 1 }, { unique: true });
 stravaActivitySchema.index({ userId: 1, startDate: -1 });
 
 module.exports = mongoose.model('StravaActivity', stravaActivitySchema);
+//Just for the sake of it
