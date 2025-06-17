@@ -1,7 +1,4 @@
 // utils/enrichActivity.js
-//This handles heart rate zone processing and metric calculation for a single activity:
-
-
 const axios = require('axios');
 
 const getHRZone = (hr, maxHr = 190) => {
@@ -15,21 +12,33 @@ const getHRZone = (hr, maxHr = 190) => {
 
 const enrichActivity = async (activity, accessToken) => {
   let zoneDistribution = [];
-  let hrZoneBuckets = [];
+  let hrZoneBuckets = [0, 0, 0, 0, 0];
+
+  let heartRateStream = [];
+  let timeStream = [];
+  let cadenceStream = [];
+  let wattsStream = [];
 
   try {
     const streamRes = await axios.get(
       `https://www.strava.com/api/v3/activities/${activity.id}/streams`,
       {
         headers: { Authorization: `Bearer ${accessToken}` },
-        params: { keys: 'heartrate,time' }
+        params: {
+          keys: 'time,heartrate,watts,cadence',
+          key_by_type: true
+        }
       }
     );
 
-    const hrStream = streamRes.data.find(s => s.type === 'heartrate')?.data || [];
-    hrZoneBuckets = [0, 0, 0, 0, 0];
+    const streamData = streamRes.data;
 
-    for (const hr of hrStream) {
+    heartRateStream = streamData.heartrate?.data || [];
+    timeStream = streamData.time?.data || [];
+    cadenceStream = streamData.cadence?.data || [];
+    wattsStream = streamData.watts?.data || [];
+
+    for (const hr of heartRateStream) {
       const zone = getHRZone(hr);
       if (zone >= 1 && zone <= 5) hrZoneBuckets[zone - 1] += 1;
     }
@@ -58,7 +67,12 @@ const enrichActivity = async (activity, accessToken) => {
     paceMinPerKm,
     hrEfficiency,
     elevationPerKm,
-    estimatedLoad
+    estimatedLoad,
+    heartRateStream,
+    timeStream,
+    cadenceStream,
+    wattsStream,
+    streamEnriched: true
   };
 };
 

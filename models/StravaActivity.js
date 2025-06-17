@@ -13,9 +13,17 @@ const stravaActivitySchema = new mongoose.Schema({
   elevationPerKm: Number,
   estimatedLoad: Number,
   averageHeartrate: Number,
+  maxHeartrate: Number,
+  averageCadence: Number,
+  averageWatts: Number,
+  streamEnriched: { type: Boolean, default: false },
   zoneDistribution: [Number],
   hrZoneBuckets: [Number],
-  raw: Object,
+  heartRateStream: [Number],
+  timeStream: [Number],
+  cadenceStream: [Number],
+  wattsStream: [Number],
+  raw: Object
 }, { timestamps: true });
 
 // 🔑 Compound index for upserts
