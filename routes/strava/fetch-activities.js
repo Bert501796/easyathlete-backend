@@ -9,7 +9,7 @@ const { classifyFitnessLevel } = require('../../utils/fitnessClassifier');
 const { fetchAthleteProfile } = require('../../utils/fetchAthleteProfile');
 
 router.post('/fetch-activities', async (req, res) => {
-  const { accessToken, userId, forceRefetch } = req.body;
+  const { accessToken, userId, forceRefetch, testActivityId } = req.body;
 
   if (!accessToken || !userId) {
     return res.status(400).json({ error: 'Missing accessToken or userId' });
@@ -22,27 +22,35 @@ router.post('/fetch-activities', async (req, res) => {
   }
 
   try {
-    // Step 1: Fetch ALL activities from Strava
-    let page = 1;
-    let allActivities = [];
+    let activities = [];
 
-    while (true) {
-      const { data } = await axios.get('https://www.strava.com/api/v3/athlete/activities', {
-        headers: { Authorization: `Bearer ${accessToken}` },
-        params: { per_page: 100, page }
+    if (testActivityId) {
+      // 🔍 Fetch a single specific activity by ID
+      console.log(`🔎 Fetching single test activity: ${testActivityId}`);
+      const { data } = await axios.get(`https://www.strava.com/api/v3/activities/${testActivityId}`, {
+        headers: { Authorization: `Bearer ${accessToken}` }
       });
-
-      if (data.length === 0) break;
-      allActivities = allActivities.concat(data);
-      page += 1;
+      activities = [data];
+    } else {
+      // 🔁 Fetch all activities (default behavior)
+      let page = 1;
+      while (true) {
+        const { data } = await axios.get('https://www.strava.com/api/v3/athlete/activities', {
+          headers: { Authorization: `Bearer ${accessToken}` },
+          params: { per_page: 100, page }
+        });
+        if (data.length === 0) break;
+        activities = activities.concat(data);
+        page += 1;
+      }
     }
 
-    // Step 2: Enrich and store/update each activity
+    // Step 2: Enrich and store
     const enrichedAndSaved = await Promise.all(
-      allActivities.map(async (activity) => {
+      activities.map(async (activity) => {
         try {
           const enriched = await enrichActivity(activity, accessToken);
-          await saveActivity(enriched, userId); // updates existing or creates new
+          await saveActivity(enriched, userId);
           return enriched.id;
         } catch (err) {
           console.warn(`❌ Failed to process activity ${activity.id}:`, err.message);
@@ -51,7 +59,7 @@ router.post('/fetch-activities', async (req, res) => {
       })
     );
 
-    // Step 3: Recalculate fitness classification
+    // Step 3: Recalculate fitness level
     try {
       const metrics = await getStravaMetrics(userId);
       const fitnessLevel = classifyFitnessLevel(metrics);
@@ -62,7 +70,9 @@ router.post('/fetch-activities', async (req, res) => {
     }
 
     return res.status(200).json({
-      message: '✅ Activities fetched and stored (or updated)',
+      message: testActivityId
+        ? `✅ Single test activity ${testActivityId} processed`
+        : '✅ Activities fetched and stored (or updated)',
       count: enrichedAndSaved.filter(Boolean).length
     });
   } catch (error) {
