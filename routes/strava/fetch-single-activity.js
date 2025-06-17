@@ -3,35 +3,45 @@ const axios = require('axios');
 const router = express.Router();
 const { enrichActivity } = require('../../utils/enrichActivity');
 const { saveActivity } = require('../../utils/saveActivity');
-const User = require('../../models/User');
 
 router.post('/fetch-single-activity', async (req, res) => {
-  const { userId, activityId } = req.body;
+  const { userId, activityId, accessToken } = req.body;
 
-  if (!userId || !activityId) {
-    return res.status(400).json({ error: 'Missing userId or activityId' });
+  if (!userId || !activityId || !accessToken) {
+    return res.status(400).json({ error: 'Missing userId, activityId or accessToken' });
   }
 
   try {
-    const user = await User.findById(userId);
-    if (!user || !user.accessToken) {
-      return res.status(404).json({ error: 'User not found or missing accessToken' });
-    }
+    console.log(`📥 Fetching activity ${activityId} for user ${userId}`);
 
-    const { data: activity } = await axios.get(
+    const { data: rawActivity } = await axios.get(
       `https://www.strava.com/api/v3/activities/${activityId}`,
       {
-        headers: { Authorization: `Bearer ${user.accessToken}` }
+        headers: { Authorization: `Bearer ${accessToken}` }
       }
     );
 
-    const enriched = await enrichActivity(activity, user.accessToken);
-    const saved = await saveActivity(enriched, userId);
+    const enriched = await enrichActivity(rawActivity, accessToken);
 
-    return res.status(200).json({ message: '✅ Activity enriched and saved', saved });
+    if (!enriched) {
+      console.warn(`⚠️ Enrichment returned null for activity ${activityId}`);
+      return res.status(500).json({ error: 'Enrichment failed' });
+    }
+
+    const saved = await saveActivity(enriched, userId);
+    console.log(`✅ Activity ${activityId} saved for user ${userId}`);
+
+    return res.status(200).json({
+      message: '✅ Activity fetched, enriched, and saved',
+      activityId
+    });
+
   } catch (err) {
-    console.error('❌ Failed to fetch/enrich/save activity:', err.message);
-    return res.status(500).json({ error: 'Enrichment failed' });
+    console.error('❌ Error in fetch-single-activity:', err.message);
+    if (err.response?.data) {
+      console.error('❌ Strava API response:', err.response.data);
+    }
+    return res.status(500).json({ error: 'Enrichment failed', details: err.message });
   }
 });
 
