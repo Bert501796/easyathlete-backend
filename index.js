@@ -19,6 +19,8 @@ const kpisRoute = require('./routes/strava/kpis');
 const analysisRoutes = require('./routes/strava/analysis');
 const exportRoute = require('./routes/admin/export');
 const refetch = require('./routes/admin/refetch-strava-data')
+const fetchSingleActivityRoute = require('./routes/strava/fetch-single-activity');
+
 
 const mongoose = require('mongoose');
 require('dotenv').config();
@@ -76,6 +78,8 @@ app.use('/strava', stravaAuthRoute);
 app.use('/api/analysis', analysisRoutes);
 app.use('/api/export', exportRoute);
 app.use('/api/admin', refetch);
+app.use('/strava', fetchSingleActivityRoute);
+
 
 
 app.get('/', (req, res) => {

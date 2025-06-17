@@ -54,7 +54,7 @@ const enrichActivity = async (activity, accessToken) => {
     const total = hrZoneBuckets.reduce((a, b) => a + b, 0);
     zoneDistribution = hrZoneBuckets.map(z => total ? +(z / total * 100).toFixed(1) : 0);
   } catch (err) {
-    console.warn(`⚠️ Failed to fetch streams for activity ${activity.id}`);
+  console.warn(`⚠️ Failed to fetch streams for activity ${activity.id}: ${err.response?.data?.message || err.message}`);
   }
 
   const distanceKm = activity.distance ? activity.distance / 1000 : 0;

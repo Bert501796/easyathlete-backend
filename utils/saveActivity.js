@@ -1,11 +1,11 @@
-const StravaActivity = require('../models/StravaActivity');
-
 const saveActivity = async (activity, userId) => {
-  return await StravaActivity.findOneAndUpdate(
-    { stravaId: activity.id, userId },
+  const stravaId = activity.id;
+
+  console.log('🧠 Saving activity with stravaId:', stravaId, 'for user:', userId);
+
+  await StravaActivity.findOneAndUpdate(
+    { stravaId, userId }, // This is the match criteria
     {
-      userId,
-      stravaId: activity.id,
       name: activity.name,
       type: activity.sport_type,
       startDate: activity.start_date,
