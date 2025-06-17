@@ -1,3 +1,4 @@
+const StravaActivity = require('../models/StravaActivity');
 const saveActivity = async (activity, userId) => {
   const stravaId = activity.id;
 
