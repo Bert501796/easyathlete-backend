@@ -1,4 +1,3 @@
-// utils/saveActivity.js
 const StravaActivity = require('../models/StravaActivity');
 
 const saveActivity = async (activity, userId) => {
@@ -34,6 +33,10 @@ const saveActivity = async (activity, userId) => {
       timeStream: activity.timeStream || [],
       cadenceStream: activity.cadenceStream || [],
       wattsStream: activity.wattsStream || [],
+      speedStream: activity.speedStream || [],
+      altitudeStream: activity.altitudeStream || [],
+      distanceStream: activity.distanceStream || [],
+      latlngStream: activity.latlngStream || [],
       streamEnriched: activity.streamEnriched || false,
 
       raw: activity

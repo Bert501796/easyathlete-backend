@@ -23,6 +23,11 @@ const stravaActivitySchema = new mongoose.Schema({
   timeStream: [Number],
   cadenceStream: [Number],
   wattsStream: [Number],
+  speedStream: [Number],
+  altitudeStream: [Number],
+  distanceStream: [Number],
+  latlngStream: [[Number]],
+
   raw: Object
 }, { timestamps: true });
 

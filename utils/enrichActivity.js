@@ -18,6 +18,10 @@ const enrichActivity = async (activity, accessToken) => {
   let timeStream = [];
   let cadenceStream = [];
   let wattsStream = [];
+  let speedStream = [];
+  let altitudeStream = [];
+  let distanceStream = [];
+  let latlngStream = [];
 
   try {
     const streamRes = await axios.get(
@@ -25,7 +29,7 @@ const enrichActivity = async (activity, accessToken) => {
       {
         headers: { Authorization: `Bearer ${accessToken}` },
         params: {
-          keys: 'time,heartrate,watts,cadence',
+          keys: 'time,heartrate,watts,cadence,velocity_smooth,altitude,distance,latlng',
           key_by_type: true
         }
       }
@@ -37,6 +41,10 @@ const enrichActivity = async (activity, accessToken) => {
     timeStream = streamData.time?.data || [];
     cadenceStream = streamData.cadence?.data || [];
     wattsStream = streamData.watts?.data || [];
+    speedStream = streamData.velocity_smooth?.data || [];
+    altitudeStream = streamData.altitude?.data || [];
+    distanceStream = streamData.distance?.data || [];
+    latlngStream = streamData.latlng?.data || [];
 
     for (const hr of heartRateStream) {
       const zone = getHRZone(hr);
@@ -72,6 +80,10 @@ const enrichActivity = async (activity, accessToken) => {
     timeStream,
     cadenceStream,
     wattsStream,
+    speedStream,
+    altitudeStream,
+    distanceStream,
+    latlngStream,
     streamEnriched: true
   };
 };
