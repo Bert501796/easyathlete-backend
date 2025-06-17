@@ -7,7 +7,6 @@ const { saveActivity } = require('../../utils/saveActivity');
 const { getStravaMetrics } = require('../../utils/dataFetchers');
 const { classifyFitnessLevel } = require('../../utils/fitnessClassifier');
 const { fetchAthleteProfile } = require('../../utils/fetchAthleteProfile');
-const pLimit = require('p-limit');
 
 router.post('/fetch-activities', async (req, res) => {
   const { accessToken, userId, forceRefetch, testActivityId } = req.body;
@@ -17,6 +16,7 @@ router.post('/fetch-activities', async (req, res) => {
   }
 
   const MAX_ACTIVITIES = 900;
+  const { default: pLimit } = await import('p-limit');
   const limit = pLimit(5); // Max 5 concurrent enrich+save operations
 
   // Step 0: Optionally fetch profile info if missing birthYear
