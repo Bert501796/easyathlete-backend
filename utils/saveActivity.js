@@ -16,7 +16,7 @@ const saveActivity = async (activity, userId) => {
     estimatedLoad: activity.estimatedLoad,
     averageHeartrate: activity.average_heartrate || 0,
     maxHeartrate: activity.max_heartrate || 0,
-    cadence: activity.average_cadence || null,
+    averageCadence: activity.average_cadence || null,
     averageWatts: activity.average_watts || null,
     calories: activity.calories || null,
     zoneDistribution: activity.zoneDistribution || [],
@@ -27,17 +27,18 @@ const saveActivity = async (activity, userId) => {
     visibility: activity.visibility || 'everyone',
     gearId: activity.gear_id || null,
 
-    // ⚠️ Temporarily exclude large stream fields to avoid MongoDB overload
-    // heartRateStream: activity.heartRateStream || [],
-    // timeStream: activity.timeStream || [],
-    // cadenceStream: activity.cadenceStream || [],
-    // wattsStream: activity.wattsStream || [],
-    // speedStream: activity.speedStream || [],
-    // altitudeStream: activity.altitudeStream || [],
-    // distanceStream: activity.distanceStream || [],
-    // latlngStream: activity.latlngStream || [],
-    // streamEnriched: activity.streamEnriched || false,
+    // ✅ Include all stream fields safely
+    heartRateStream: activity.heartRateStream || [],
+    timeStream: activity.timeStream || [],
+    cadenceStream: activity.cadenceStream || [],
+    wattsStream: activity.wattsStream || [],
+    speedStream: activity.speedStream || [],
+    altitudeStream: activity.altitudeStream || [],
+    distanceStream: activity.distanceStream || [],
+    latlngStream: activity.latlngStream || [],
+    streamEnriched: activity.streamEnriched || false,
 
+    // ⚠️ Optional: consider trimming this if it gets too large
     raw: activity
   };
 

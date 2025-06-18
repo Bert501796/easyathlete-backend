@@ -19,6 +19,8 @@ const stravaActivitySchema = new mongoose.Schema({
   streamEnriched: { type: Boolean, default: false },
   zoneDistribution: [Number],
   hrZoneBuckets: [Number],
+
+  // ✅ Required stream fields retained
   heartRateStream: [Number],
   timeStream: [Number],
   cadenceStream: [Number],
@@ -28,14 +30,14 @@ const stravaActivitySchema = new mongoose.Schema({
   distanceStream: [Number],
   latlngStream: [[Number]],
 
+  // 🧠 Optional: Keep raw summary but consider trimming unneeded fields elsewhere
   raw: Object
 }, { timestamps: true });
 
-// 🔑 Compound index for upserts
+// 🔐 Compound index to prevent duplicates
 stravaActivitySchema.index({ userId: 1, stravaId: 1 }, { unique: true });
 
-// 📅 Index for sorting/filtering by date
+// 📅 Index for efficient time-based queries
 stravaActivitySchema.index({ userId: 1, startDate: -1 });
 
 module.exports = mongoose.model('StravaActivity', stravaActivitySchema);
-//Just for the sake of it
