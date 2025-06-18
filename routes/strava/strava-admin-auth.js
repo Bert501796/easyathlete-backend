@@ -56,7 +56,7 @@ router.get('/admin-redirect', async (req, res) => {
     console.log(`✅ Admin-linked Strava athlete ${stravaId} to user ${userId}`);
 
     // Optional: Redirect to frontend admin page
-    return res.redirect(`${process.env.FRONTEND_URL}/admin?stravaLinked=1`);
+    return res.redirect(`${process.env.FRONTEND_URL}/dashboard?stravaLinked=1`);
   } catch (err) {
     console.error('❌ Admin redirect error:', err.response?.data || err.message);
     return res.status(500).send('Failed to complete Strava auth');
