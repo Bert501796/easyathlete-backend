@@ -47,8 +47,7 @@ router.get('/admin-redirect', async (req, res) => {
     if (!stravaId) return res.status(400).send('No athlete ID');
 
     await User.findByIdAndUpdate(
-      { customUserId: userId }, 
-      {
+      userId,      {
       accessToken,
       refreshToken,
       tokenExpiresAt,
