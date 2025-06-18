@@ -5,6 +5,21 @@ const axios = require('axios');
 const router = express.Router(); // ✅ This line was missing
 const User = require('../../models/User');
 
+router.post('/auth/admin-initiate', async (req, res) => {
+  const { userId } = req.body;
+
+  if (!userId) {
+    return res.status(400).json({ error: 'Missing userId' });
+  }
+
+  const redirectUri = process.env.STRAVA_REDIRECT_URI; // e.g., https://yourdomain.com/strava/admin-redirect
+  const clientId = process.env.STRAVA_CLIENT_ID;
+
+  const authUrl = `https://www.strava.com/oauth/authorize?client_id=${clientId}&response_type=code&redirect_uri=${encodeURIComponent(redirectUri)}&approval_prompt=auto&scope=read,activity:read_all&state=${userId}`;
+
+  return res.status(200).json({ authUrl });
+});
+
 
 router.get('/admin-redirect', async (req, res) => {
   const { code, state: userId } = req.query;
