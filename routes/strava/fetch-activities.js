@@ -11,6 +11,11 @@ const { fetchAthleteProfile } = require('../../utils/fetchAthleteProfile');
 let currentlyProcessing = false; // 🚦 Prevent concurrent fetch calls
 
 router.post('/fetch-activities', async (req, res) => {
+  // 🚧 Disable endpoint completely if DISABLE_FETCH is true
+  if (process.env.DISABLE_FETCH === 'true') {
+    return res.status(503).json({ error: '🚫 Fetch endpoint temporarily disabled by server config.' });
+  }
+
   if (currentlyProcessing) {
     return res.status(429).json({ error: 'Another fetch is in progress. Please wait.' });
   }
@@ -24,10 +29,7 @@ router.post('/fetch-activities', async (req, res) => {
   }
 
   const MAX_ACTIVITIES = 900;
-  // const { default: pLimit } = await import('p-limit');
-  // const limit = pLimit(5); // Max 5 concurrent enrich+save operations
 
-  // Step 0: Optionally fetch profile info if missing birthYear
   const user = await User.findById(userId);
   if (user && (!user.birthYear || forceRefetch)) {
     await fetchAthleteProfile(accessToken, userId);
@@ -64,31 +66,10 @@ router.post('/fetch-activities', async (req, res) => {
       }
     }
 
-    // Disabled for safety during DB instability:
+    // Processing disabled to avoid MongoDB overload
     // const enrichedAndSaved = await Promise.all(
-    //   activities.map(activity =>
-    //     limit(async () => {
-    //       try {
-    //         const enriched = await enrichActivity(activity, accessToken);
-    //         await saveActivity(enriched, userId);
-    //         return enriched.id;
-    //       } catch (err) {
-    //         console.warn(`❌ Failed to process activity ${activity.id}:`, err.message);
-    //         return null;
-    //       }
-    //     })
-    //   )
+    //   activities.map(activity => ...)
     // );
-
-    // Disabled fitness level update for now
-    // try {
-    //   const metrics = await getStravaMetrics(userId);
-    //   const fitnessLevel = classifyFitnessLevel(metrics);
-    //   await User.updateOne({ _id: userId }, { fitnessLevel });
-    //   console.log(`✅ Updated fitness level to ${fitnessLevel} for user ${userId}`);
-    // } catch (fitnessErr) {
-    //   console.error(`❌ Fitness classification failed for ${userId}`, fitnessErr);
-    // }
 
     return res.status(200).json({
       message: testActivityId
