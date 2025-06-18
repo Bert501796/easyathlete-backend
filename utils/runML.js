@@ -1,23 +1,19 @@
-const { exec } = require("child_process");
-const path = require("path");
+const axios = require("axios");
 
-function runMLOnActivity(stravaId) {
-  return new Promise((resolve, reject) => {
-    const scriptPath = path.join(__dirname, "../../easyathlete-ml/ml_service.py");
-
-    exec(`python "${scriptPath}" ${stravaId}`, (error, stdout, stderr) => {
-      if (error) {
-        console.error("❌ ML error:", stderr);
-        return reject(stderr);
+async function runMLOnActivity(stravaId) {
+  try {
+    const response = await axios.get(
+      `http://easyathlete-ml.railway.internal/analyze`,
+      {
+        params: { stravaId },
+        timeout: 10000, // optional timeout
       }
-      try {
-        const result = JSON.parse(stdout);
-        resolve(result);
-      } catch (err) {
-        reject("Failed to parse ML output: " + err.message);
-      }
-    });
-  });
+    );
+    return response.data;
+  } catch (err) {
+    console.error("❌ ML service call failed:", err.message);
+    return { error: "Failed to fetch analysis from ML service" };
+  }
 }
-//
+
 module.exports = { runMLOnActivity };
