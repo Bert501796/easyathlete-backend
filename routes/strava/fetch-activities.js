@@ -9,7 +9,7 @@ const { classifyFitnessLevel } = require('../../utils/fitnessClassifier');
 const { fetchAthleteProfile } = require('../../utils/fetchAthleteProfile');
 
 let currentlyProcessing = false;
-const MAX_ACTIVITIES = 1;
+const MAX_ACTIVITIES = 5;
 const CONCURRENCY_LIMIT = 5;
 
 router.post('/fetch-activities', async (req, res) => {
