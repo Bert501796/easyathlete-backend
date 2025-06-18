@@ -1,7 +1,10 @@
 // routes/strava/strava-admin-auth.js (continued)
 
+const express = require('express');
 const axios = require('axios');
+const router = express.Router(); // ✅ This line was missing
 const User = require('../../models/User');
+
 
 router.get('/admin-redirect', async (req, res) => {
   const { code, state: userId } = req.query;
@@ -44,3 +47,6 @@ router.get('/admin-redirect', async (req, res) => {
     return res.status(500).send('Failed to complete Strava auth');
   }
 });
+
+module.exports = router;
+
