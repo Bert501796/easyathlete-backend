@@ -3,10 +3,10 @@ const axios = require("axios");
 async function runMLOnActivity(stravaId) {
   try {
     const response = await axios.get(
-      `http://easyathlete-ml.railway.internal/analyze`,
+      `https://easyathlete-ml.up.railway.app/analyze`,
       {
         params: { stravaId },
-        timeout: 10000, // optional timeout
+        timeout: 10000,
       }
     );
     return response.data;
