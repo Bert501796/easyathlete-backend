@@ -1,6 +1,6 @@
 const express = require("express");
 const router = express.Router();
-const { runMLOnActivity } = require("../utils/runML");
+const { runMLOnActivity } = require("../../utils/runML");
 
 // Endpoint: GET /api/ml/analyze/:stravaId
 router.get("/ml/analyze/:stravaId", async (req, res) => {
