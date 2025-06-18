@@ -30,7 +30,15 @@ router.post('/fetch-activities', async (req, res) => {
   }
 
   try {
-    const user = await User.findById(userId);
+    //const user = await User.findById(userId);
+
+    const user = await User.findOne({
+  $or: [
+    { _id: userId },
+    { customUserId: userId }
+  ]
+});
+
     if (user && (!user.birthYear || forceRefetch)) {
       await fetchAthleteProfile(accessToken, userId);
     }
