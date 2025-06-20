@@ -1,5 +1,7 @@
 const StravaActivity = require('../models/StravaActivity');
-const axios = require('axios'); // ✅ Required for calling the enrichment API
+const axios = require('axios');
+
+const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
 const saveActivity = async (activity, userId) => {
   const stravaId = activity.id;
@@ -50,25 +52,43 @@ const saveActivity = async (activity, userId) => {
     raw: activity
   };
 
+  console.log('📦 Writing to MongoDB...');
   const savedActivity = await StravaActivity.findOneAndUpdate(
     { stravaId, userId },
     { $set: update },
     { upsert: true, new: true }
   );
 
+  // 🧘 Add delay after MongoDB write
+  await delay(200);
+
   // 🔁 Trigger ML enrichment via FastAPI
   try {
-const ML_API_BASE = process.env.ML_API_URL || 'http://localhost:8000';
-console.log('🔗 ML API URL:', ML_API_BASE);
+    const ML_API_BASE = process.env.ML_API_URL || 'http://localhost:8000';
+    console.log('🔗 ML API URL:', ML_API_BASE);
 
-
-const enrichmentRes = await axios.post(`${ML_API_BASE}/ml/enrich-activity`, {
-  activity_id: savedActivity._id,
-  user_id: userId
+    const enrichmentRes = await axios.post(`${ML_API_BASE}/ml/enrich-activity`, {
+      activity_id: savedActivity._id,
+      user_id: userId
     });
+
     console.log('🧠 Enrichment triggered:', enrichmentRes.data);
+
   } catch (err) {
-    console.warn('⚠️ Enrichment call failed:', err.message);
+    console.warn('⚠️ Enrichment call failed (1st attempt):', err.message);
+
+    // 🔁 Optional: Retry after short delay
+    try {
+      await delay(500);
+      const ML_API_BASE = process.env.ML_API_URL || 'http://localhost:8000';
+      const retryRes = await axios.post(`${ML_API_BASE}/ml/enrich-activity`, {
+        activity_id: savedActivity._id,
+        user_id: userId
+      });
+      console.log('🔁 Retry successful:', retryRes.data);
+    } catch (retryErr) {
+      console.warn('❌ Retry failed:', retryErr.message);
+    }
   }
 };
 

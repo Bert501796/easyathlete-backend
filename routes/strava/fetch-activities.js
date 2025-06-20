@@ -8,7 +8,7 @@ const { saveActivity } = require('../../utils/saveActivity');
 const { fetchAthleteProfile } = require('../../utils/fetchAthleteProfile');
 
 let currentlyProcessing = false;
-const MAX_ACTIVITIES = 250;
+const MAX_ACTIVITIES = 1;
 const CONCURRENCY_LIMIT = 5;
 
 router.post('/fetch-activities', async (req, res) => {
@@ -21,7 +21,7 @@ router.post('/fetch-activities', async (req, res) => {
   }
   currentlyProcessing = true;
 
-  const { accessToken, userId, forceRefetch = false, testActivityId } = req.body;
+  const { accessToken, userId, forceRefetch = true, testActivityId } = req.body;
 
   if (!accessToken || !userId) {
     currentlyProcessing = false;
