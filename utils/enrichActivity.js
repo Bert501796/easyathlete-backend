@@ -16,15 +16,15 @@ const getHRZone = (hr, maxHr = 190) => {
 const enrichActivity = async (activity, accessToken) => {
   const existing = await StravaActivity.findOne({ stravaId: activity.id, userId: activity.athlete?.id?.toString() });
 
-  // ✅ Skip enrichment if already enriched and up-to-date
-  if (
-    existing &&
-    existing.streamEnriched === true &&
-    existing.enrichmentVersion >= ENRICHMENT_VERSION
-  ) {
-    console.log(`⏭️ Skipping enrichment for ${activity.id} (already enriched v${existing.enrichmentVersion})`);
-    return { ...existing.toObject(), alreadyEnriched: true };
-  }
+  // // ✅ Skip enrichment if already enriched and up-to-date
+  // if (
+  //   existing &&
+  //   existing.streamEnriched === true &&
+  //   existing.enrichmentVersion >= ENRICHMENT_VERSION
+  // ) {
+  //   console.log(`⏭️ Skipping enrichment for ${activity.id} (already enriched v${existing.enrichmentVersion})`);
+  //   return { ...existing.toObject(), alreadyEnriched: true };
+  // }
 
   let zoneDistribution = [];
   let hrZoneBuckets = [0, 0, 0, 0, 0];
@@ -62,16 +62,7 @@ const enrichActivity = async (activity, accessToken) => {
     distanceStream = streamData.distance?.data || [];
     latlngStream = streamData.latlng?.data || [];
 
-    const length = Math.min(
-      timeStream.length,
-      heartRateStream.length,
-      cadenceStream.length,
-      wattsStream.length || heartRateStream.length,
-      speedStream.length,
-      altitudeStream.length,
-      distanceStream.length
-    );
-
+    // ✅ Calculate HR zones
     for (let i = 0; i < heartRateStream.length; i++) {
       const zone = getHRZone(heartRateStream[i]);
       if (zone >= 1 && zone <= 5) hrZoneBuckets[zone - 1] += 1;
@@ -80,15 +71,28 @@ const enrichActivity = async (activity, accessToken) => {
     const total = hrZoneBuckets.reduce((a, b) => a + b, 0);
     zoneDistribution = hrZoneBuckets.map(z => total ? +(z / total * 100).toFixed(1) : 0);
 
+    // ✅ Determine max stream length across all available streams
+    const streamLengths = [
+      timeStream?.length || 0,
+      heartRateStream?.length || 0,
+      cadenceStream?.length || 0,
+      wattsStream?.length || 0,
+      speedStream?.length || 0,
+      altitudeStream?.length || 0,
+      distanceStream?.length || 0
+    ];
+    const length = Math.max(...streamLengths);
+
+    // ✅ Build full stream data safely with null fallbacks
     for (let i = 0; i < length; i++) {
       stream_data_full.push({
-        time_sec: timeStream[i],
-        heart_rate: heartRateStream[i],
-        watts: wattsStream[i] || 0,
-        speed: speedStream[i],
-        cadence: cadenceStream[i],
-        altitude: altitudeStream[i],
-        distance: distanceStream[i]
+        time_sec: timeStream?.[i] ?? null,
+        heart_rate: heartRateStream?.[i] ?? null,
+        watts: wattsStream?.[i] ?? null,
+        speed: speedStream?.[i] ?? null,
+        cadence: cadenceStream?.[i] ?? null,
+        altitude: altitudeStream?.[i] ?? null,
+        distance: distanceStream?.[i] ?? null
       });
     }
 
