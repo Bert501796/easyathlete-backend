@@ -1,6 +1,9 @@
 const express = require('express');
 const axios = require('axios');
 const router = express.Router();
+require('dotenv').config(); // ✅ Ensure .env is loaded
+
+const ML_API_BASE = process.env.ML_API_URL || 'http://localhost:8000';
 
 router.post('/predict', async (req, res) => {
   const { userId } = req.body;
@@ -8,7 +11,7 @@ router.post('/predict', async (req, res) => {
   if (!userId) return res.status(400).json({ error: 'Missing userId' });
 
   try {
-    const { data } = await axios.post('http://localhost:8000/ml/predict-user', {
+    const { data } = await axios.post(`${ML_API_BASE}/ml/predict-user`, {
       user_id: userId
     });
     return res.json(data);

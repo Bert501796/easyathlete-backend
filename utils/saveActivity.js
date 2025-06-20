@@ -1,6 +1,7 @@
 const StravaActivity = require('../models/StravaActivity');
 const axios = require('axios');
 
+
 const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
 const saveActivity = async (activity, userId) => {
