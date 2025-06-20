@@ -2,10 +2,9 @@ const express = require('express');
 const axios = require('axios');
 const router = express.Router();
 const User = require('../../models/User');
+const StravaActivity = require('../../models/StravaActivity');
 const { enrichActivity } = require('../../utils/enrichActivity');
 const { saveActivity } = require('../../utils/saveActivity');
-const { getStravaMetrics } = require('../../utils/dataFetchers');
-const { classifyFitnessLevel } = require('../../utils/fitnessClassifier');
 const { fetchAthleteProfile } = require('../../utils/fetchAthleteProfile');
 
 let currentlyProcessing = false;
@@ -22,7 +21,7 @@ router.post('/fetch-activities', async (req, res) => {
   }
   currentlyProcessing = true;
 
-  const { accessToken, userId, forceRefetch, testActivityId } = req.body;
+  const { accessToken, userId, forceRefetch = false, testActivityId } = req.body;
 
   if (!accessToken || !userId) {
     currentlyProcessing = false;
@@ -30,14 +29,9 @@ router.post('/fetch-activities', async (req, res) => {
   }
 
   try {
-    //const user = await User.findById(userId);
-
     const user = await User.findOne({
-  $or: [
-    { _id: userId },
-    { customUserId: userId }
-  ]
-});
+      $or: [{ _id: userId }, { customUserId: userId }]
+    });
 
     if (user && (!user.birthYear || forceRefetch)) {
       await fetchAthleteProfile(accessToken, userId);
@@ -60,18 +54,24 @@ router.post('/fetch-activities', async (req, res) => {
 
         if (data.length === 0) break;
         activities = activities.concat(data);
-
-        if (activities.length >= MAX_ACTIVITIES) {
-          activities = activities.slice(0, MAX_ACTIVITIES);
-          break;
-        }
+        if (activities.length >= MAX_ACTIVITIES) break;
 
         page += 1;
-        await new Promise(resolve => setTimeout(resolve, 300)); // throttle API rate
+        await new Promise(resolve => setTimeout(resolve, 300));
       }
     }
 
-    // ✅ Enrich & Save in limited concurrency batches
+    // ✅ Find existing stravaIds in MongoDB for this user
+    const existing = await StravaActivity.find({ userId }, { stravaId: 1 });
+    const existingIds = new Set(existing.map(doc => doc.stravaId));
+
+    // ✅ Filter activities that are new unless forceRefetch is true
+    const filteredActivities = forceRefetch
+      ? activities
+      : activities.filter(a => !existingIds.has(a.id));
+
+    const skippedCount = activities.length - filteredActivities.length;
+
     const limitConcurrency = async (tasks, limit) => {
       const results = [];
       let index = 0;
@@ -81,7 +81,7 @@ router.post('/fetch-activities', async (req, res) => {
           const batch = tasks.slice(index, index + limit).map(fn => fn());
           results.push(...await Promise.allSettled(batch));
           index += limit;
-          await new Promise(resolve => setTimeout(resolve, 200)); // brief pause between batches
+          await new Promise(resolve => setTimeout(resolve, 200));
         }
       };
 
@@ -89,7 +89,7 @@ router.post('/fetch-activities', async (req, res) => {
       return results;
     };
 
-    const tasks = activities.map(activity => async () => {
+    const tasks = filteredActivities.map(activity => async () => {
       try {
         const enriched = await enrichActivity(activity, accessToken);
         await saveActivity(enriched, userId);
@@ -105,8 +105,9 @@ router.post('/fetch-activities', async (req, res) => {
     return res.status(200).json({
       message: testActivityId
         ? `✅ Single test activity ${testActivityId} fetched and processed`
-        : `✅ ${processed.length} activities fetched and saved`,
-      count: processed.filter(r => r.status === 'fulfilled').length
+        : `✅ ${processed.length} activities processed (${skippedCount} skipped)`,
+      processedCount: processed.filter(r => r.status === 'fulfilled').length,
+      skippedCount
     });
 
   } catch (error) {

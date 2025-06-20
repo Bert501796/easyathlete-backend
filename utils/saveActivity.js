@@ -1,4 +1,5 @@
 const StravaActivity = require('../models/StravaActivity');
+const axios = require('axios'); // ✅ Required for calling the enrichment API
 
 const saveActivity = async (activity, userId) => {
   const stravaId = activity.id;
@@ -27,7 +28,7 @@ const saveActivity = async (activity, userId) => {
     visibility: activity.visibility || 'everyone',
     gearId: activity.gear_id || null,
 
-    // ✅ Include all stream fields safely
+    // ✅ Basic stream fields
     heartRateStream: activity.heartRateStream || [],
     timeStream: activity.timeStream || [],
     cadenceStream: activity.cadenceStream || [],
@@ -38,15 +39,33 @@ const saveActivity = async (activity, userId) => {
     latlngStream: activity.latlngStream || [],
     streamEnriched: activity.streamEnriched || false,
 
-    // ⚠️ Optional: consider trimming this if it gets too large
+    // ✅ Extended ML-relevant data
+    aggregatedFeatures: activity.aggregatedFeatures || {},
+    segments: activity.segments || [],
+    segmentSummary: activity.segmentSummary || {},
+    mlWindows: activity.mlWindows || [],
+    stream_data_full: activity.stream_data_full || {},
+
+    // 🔁 Preserve full raw payload
     raw: activity
   };
 
-  await StravaActivity.findOneAndUpdate(
+  const savedActivity = await StravaActivity.findOneAndUpdate(
     { stravaId, userId },
-    update,
+    { $set: update },
     { upsert: true, new: true }
   );
+
+  // 🔁 Trigger ML enrichment via FastAPI
+  try {
+    const enrichmentRes = await axios.post('http://localhost:8000/ml/enrich-activity', {
+      activity_id: savedActivity._id,
+      user_id: userId
+    });
+    console.log('🧠 Enrichment triggered:', enrichmentRes.data);
+  } catch (err) {
+    console.warn('⚠️ Enrichment call failed:', err.message);
+  }
 };
 
 module.exports = { saveActivity };

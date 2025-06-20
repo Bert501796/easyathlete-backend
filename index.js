@@ -22,6 +22,7 @@ const refetch = require('./routes/admin/refetch-strava-data');
 const fetchSingleActivityRoute = require('./routes/strava/fetch-single-activity');
 const stravaAdminRoutes = require('./routes/strava/strava-admin-auth');
 const mlRoutes = require("./routes/ML/ml");
+const mlPredictRoute = require('./routes/ML/predict');
 
 
 
@@ -83,6 +84,8 @@ const startServer = async () => {
     app.use('/strava', fetchSingleActivityRoute);
     app.use('/strava', stravaAdminRoutes);
     app.use("/api", mlRoutes);
+    app.use('/ml', mlPredictRoute);
+
 
 
     // Health check route

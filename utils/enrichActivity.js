@@ -1,5 +1,8 @@
 // utils/enrichActivity.js
 const axios = require('axios');
+const StravaActivity = require('../models/StravaActivity');
+
+const ENRICHMENT_VERSION = 1; // bump this when logic updates
 
 const getHRZone = (hr, maxHr = 190) => {
   const percent = hr / maxHr;
@@ -11,6 +14,18 @@ const getHRZone = (hr, maxHr = 190) => {
 };
 
 const enrichActivity = async (activity, accessToken) => {
+  const existing = await StravaActivity.findOne({ stravaId: activity.id, userId: activity.athlete?.id?.toString() });
+
+  // ✅ Skip enrichment if already enriched and up-to-date
+  if (
+    existing &&
+    existing.streamEnriched === true &&
+    existing.enrichmentVersion >= ENRICHMENT_VERSION
+  ) {
+    console.log(`⏭️ Skipping enrichment for ${activity.id} (already enriched v${existing.enrichmentVersion})`);
+    return { ...existing.toObject(), alreadyEnriched: true };
+  }
+
   let zoneDistribution = [];
   let hrZoneBuckets = [0, 0, 0, 0, 0];
 
@@ -22,6 +37,7 @@ const enrichActivity = async (activity, accessToken) => {
   let altitudeStream = [];
   let distanceStream = [];
   let latlngStream = [];
+  let stream_data_full = [];
 
   try {
     const streamRes = await axios.get(
@@ -46,15 +62,38 @@ const enrichActivity = async (activity, accessToken) => {
     distanceStream = streamData.distance?.data || [];
     latlngStream = streamData.latlng?.data || [];
 
-    for (const hr of heartRateStream) {
-      const zone = getHRZone(hr);
+    const length = Math.min(
+      timeStream.length,
+      heartRateStream.length,
+      cadenceStream.length,
+      wattsStream.length || heartRateStream.length,
+      speedStream.length,
+      altitudeStream.length,
+      distanceStream.length
+    );
+
+    for (let i = 0; i < heartRateStream.length; i++) {
+      const zone = getHRZone(heartRateStream[i]);
       if (zone >= 1 && zone <= 5) hrZoneBuckets[zone - 1] += 1;
     }
 
     const total = hrZoneBuckets.reduce((a, b) => a + b, 0);
     zoneDistribution = hrZoneBuckets.map(z => total ? +(z / total * 100).toFixed(1) : 0);
+
+    for (let i = 0; i < length; i++) {
+      stream_data_full.push({
+        time_sec: timeStream[i],
+        heart_rate: heartRateStream[i],
+        watts: wattsStream[i] || 0,
+        speed: speedStream[i],
+        cadence: cadenceStream[i],
+        altitude: altitudeStream[i],
+        distance: distanceStream[i]
+      });
+    }
+
   } catch (err) {
-  console.warn(`⚠️ Failed to fetch streams for activity ${activity.id}: ${err.response?.data?.message || err.message}`);
+    console.warn(`⚠️ Failed to fetch streams for activity ${activity.id}: ${err.response?.data?.message || err.message}`);
   }
 
   const distanceKm = activity.distance ? activity.distance / 1000 : 0;
@@ -84,7 +123,9 @@ const enrichActivity = async (activity, accessToken) => {
     altitudeStream,
     distanceStream,
     latlngStream,
-    streamEnriched: true
+    stream_data_full,
+    streamEnriched: true,
+    enrichmentVersion: ENRICHMENT_VERSION
   };
 };
 

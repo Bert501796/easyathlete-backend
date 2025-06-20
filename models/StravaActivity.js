@@ -16,11 +16,17 @@ const stravaActivitySchema = new mongoose.Schema({
   maxHeartrate: Number,
   averageCadence: Number,
   averageWatts: Number,
+  calories: Number,
   streamEnriched: { type: Boolean, default: false },
   zoneDistribution: [Number],
   hrZoneBuckets: [Number],
+  workoutType: String,
+  isCommute: Boolean,
+  isManual: Boolean,
+  visibility: String,
+  gearId: String,
 
-  // ✅ Required stream fields retained
+  // ✅ Stream data
   heartRateStream: [Number],
   timeStream: [Number],
   cadenceStream: [Number],
@@ -30,14 +36,21 @@ const stravaActivitySchema = new mongoose.Schema({
   distanceStream: [Number],
   latlngStream: [[Number]],
 
-  // 🧠 Optional: Keep raw summary but consider trimming unneeded fields elsewhere
+  // ✅ New ML + enrichment fields
+  aggregatedFeatures: Object,
+  segments: [Object],
+  segmentSummary: Object,
+  mlWindows: [Object],
+  stream_data_full: Object,
+
+  // 🧠 Optional: Raw full activity (can be large)
   raw: Object
 }, { timestamps: true });
 
-// 🔐 Compound index to prevent duplicates
+// 🔐 Prevent duplicate stravaId per user
 stravaActivitySchema.index({ userId: 1, stravaId: 1 }, { unique: true });
 
-// 📅 Index for efficient time-based queries
+// 📅 Index for time-based queries
 stravaActivitySchema.index({ userId: 1, startDate: -1 });
 
 module.exports = mongoose.model('StravaActivity', stravaActivitySchema);
