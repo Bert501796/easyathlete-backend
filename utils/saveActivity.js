@@ -58,9 +58,11 @@ const saveActivity = async (activity, userId) => {
 
   // 🔁 Trigger ML enrichment via FastAPI
   try {
-    const enrichmentRes = await axios.post('http://localhost:8000/ml/enrich-activity', {
-      activity_id: savedActivity._id,
-      user_id: userId
+const ML_API_BASE = process.env.ML_API_URL || 'http://localhost:8000';
+
+const enrichmentRes = await axios.post(`${ML_API_BASE}/ml/enrich-activity`, {
+  activity_id: savedActivity._id,
+  user_id: userId
     });
     console.log('🧠 Enrichment triggered:', enrichmentRes.data);
   } catch (err) {
