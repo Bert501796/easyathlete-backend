@@ -23,6 +23,8 @@ const fetchSingleActivityRoute = require('./routes/strava/fetch-single-activity'
 const stravaAdminRoutes = require('./routes/strava/strava-admin-auth');
 const mlRoutes = require("./routes/ML/ml");
 const mlPredictRoute = require('./routes/ML/predict');
+const progressRoutes = require("./routes/ML/progress");
+
 
 
 
@@ -85,6 +87,8 @@ const startServer = async () => {
     app.use('/strava', stravaAdminRoutes);
     app.use("/api", mlRoutes);
     app.use('/ml', mlPredictRoute);
+    app.use("/ml", progressRoutes);
+
 
 
 
