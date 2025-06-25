@@ -4,6 +4,7 @@ const axios = require("axios");
 
 router.post("/progress", async (req, res) => {
   const { userId, activityType } = req.body;
+  console.log("▶️ /ml/progress called with:", userId, activityType);
 
   try {
     const mlApiUrl = process.env.ML_API_URL || "https://easyathlete-ml-production.up.railway.app";
@@ -12,9 +13,14 @@ router.post("/progress", async (req, res) => {
       activity_type: activityType || null,
     });
 
+    if (!response.data) {
+      console.warn("⚠️ ML response was empty");
+      return res.status(204).send();  // No content
+    }
+
     res.json(response.data);
   } catch (error) {
-    console.error("❌ ML Progress fetch failed:", error.message);
+    console.error("❌ ML Progress fetch failed:", error);
     res.status(500).json({ error: "Failed to fetch progress trends." });
   }
 });
