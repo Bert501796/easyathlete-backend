@@ -80,11 +80,13 @@ router.post('/fetch-activities', async (req, res) => {
 
       activities = activities.concat(newActivities);
 
-      if (newActivities.length === 0) break;
-      if (MAX_ACTIVITIES && activities.length >= MAX_ACTIVITIES) {
-        activities = activities.slice(0, MAX_ACTIVITIES);
-        break;
-      }
+      // ✅ Only break early if we're not forcing full resync
+    if (!forceRefetch && newActivities.length === 0) break;
+
+    if (MAX_ACTIVITIES && activities.length >= MAX_ACTIVITIES) {
+      activities = activities.slice(0, MAX_ACTIVITIES);
+      break;
+    }
 
       page += 1;
       await new Promise(resolve => setTimeout(resolve, 800));
