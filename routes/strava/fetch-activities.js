@@ -8,7 +8,6 @@ const { saveActivity } = require('../../utils/saveActivity');
 const { fetchAthleteProfile } = require('../../utils/fetchAthleteProfile');
 
 let currentlyProcessing = false;
-const MAX_ACTIVITIES = 1;
 const CONCURRENCY_LIMIT = 5;
 
 router.post('/fetch-activities', async (req, res) => {
@@ -21,7 +20,8 @@ router.post('/fetch-activities', async (req, res) => {
   }
   currentlyProcessing = true;
 
-  const { accessToken, userId, forceRefetch = true, testActivityId } = req.body;
+  const { accessToken, userId, forceRefetch = true, testActivityId, limit } = req.body;
+  const MAX_ACTIVITIES = limit || 300;
 
   if (!accessToken || !userId) {
     currentlyProcessing = false;
@@ -45,71 +45,80 @@ router.post('/fetch-activities', async (req, res) => {
       });
       activities = [data];
     } else {
+      // ✅ Find existing stravaIds in MongoDB for this user
+      const existing = await StravaActivity.find({ userId }, { stravaId: 1 });
+      const existingIds = new Set(existing.map(doc => doc.stravaId));
+
       let page = 1;
-      while (activities.length < MAX_ACTIVITIES) {
+      let keepFetching = true;
+
+      while (keepFetching) {
         const { data } = await axios.get('https://www.strava.com/api/v3/athlete/activities', {
           headers: { Authorization: `Bearer ${accessToken}` },
           params: { per_page: 100, page }
         });
 
         if (data.length === 0) break;
-        activities = activities.concat(data);
-        if (activities.length >= MAX_ACTIVITIES) break;
+
+        const newActivities = data.filter(a => !existingIds.has(a.id));
+        activities = activities.concat(newActivities);
+
+        if (newActivities.length === 0) break;
+
+        if (MAX_ACTIVITIES && activities.length >= MAX_ACTIVITIES) {
+          activities = activities.slice(0, MAX_ACTIVITIES);
+          break;
+        }
 
         page += 1;
-        await new Promise(resolve => setTimeout(resolve, 300));
+        await new Promise(resolve => setTimeout(resolve, 800));
       }
-    }
 
-    // ✅ Find existing stravaIds in MongoDB for this user
-    const existing = await StravaActivity.find({ userId }, { stravaId: 1 });
-    const existingIds = new Set(existing.map(doc => doc.stravaId));
+      // ✅ Filter activities that are new unless forceRefetch is true
+      const filteredActivities = forceRefetch
+        ? activities
+        : activities.filter(a => !existingIds.has(a.id));
 
-    // ✅ Filter activities that are new unless forceRefetch is true
-    const filteredActivities = forceRefetch
-      ? activities
-      : activities.filter(a => !existingIds.has(a.id));
+      const skippedCount = activities.length - filteredActivities.length;
 
-    const skippedCount = activities.length - filteredActivities.length;
+      const limitConcurrency = async (tasks, limit) => {
+        const results = [];
+        let index = 0;
 
-    const limitConcurrency = async (tasks, limit) => {
-      const results = [];
-      let index = 0;
+        const runBatch = async () => {
+          while (index < tasks.length) {
+            const batch = tasks.slice(index, index + limit).map(fn => fn());
+            results.push(...await Promise.allSettled(batch));
+            index += limit;
+            await new Promise(resolve => setTimeout(resolve, 200));
+          }
+        };
 
-      const runBatch = async () => {
-        while (index < tasks.length) {
-          const batch = tasks.slice(index, index + limit).map(fn => fn());
-          results.push(...await Promise.allSettled(batch));
-          index += limit;
-          await new Promise(resolve => setTimeout(resolve, 200));
-        }
+        await runBatch();
+        return results;
       };
 
-      await runBatch();
-      return results;
-    };
+      const tasks = filteredActivities.map(activity => async () => {
+        try {
+          const enriched = await enrichActivity(activity, accessToken);
+          await saveActivity(enriched, userId);
+          return enriched.id;
+        } catch (err) {
+          console.warn(`❌ Failed to process activity ${activity.id}: ${err.message}`);
+          return null;
+        }
+      });
 
-    const tasks = filteredActivities.map(activity => async () => {
-      try {
-        const enriched = await enrichActivity(activity, accessToken);
-        await saveActivity(enriched, userId);
-        return enriched.id;
-      } catch (err) {
-        console.warn(`❌ Failed to process activity ${activity.id}: ${err.message}`);
-        return null;
-      }
-    });
+      const processed = await limitConcurrency(tasks, CONCURRENCY_LIMIT);
 
-    const processed = await limitConcurrency(tasks, CONCURRENCY_LIMIT);
-
-    return res.status(200).json({
-      message: testActivityId
-        ? `✅ Single test activity ${testActivityId} fetched and processed`
-        : `✅ ${processed.length} activities processed (${skippedCount} skipped)`,
-      processedCount: processed.filter(r => r.status === 'fulfilled').length,
-      skippedCount
-    });
-
+      return res.status(200).json({
+        message: testActivityId
+          ? `✅ Single test activity ${testActivityId} fetched and processed`
+          : `✅ ${processed.length} activities processed (${skippedCount} skipped)`,
+        processedCount: processed.filter(r => r.status === 'fulfilled').length,
+        skippedCount
+      });
+    }
   } catch (error) {
     console.error('❌ Fetch error:', error.response?.data || error.message);
     return res.status(500).json({ error: 'Failed to fetch and store activities' });
