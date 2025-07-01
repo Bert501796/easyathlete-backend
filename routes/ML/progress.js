@@ -34,13 +34,13 @@ router.post("/progress", async (req, res) => {
       metrics: metrics || null
     });
 
-    if (!response.data || !Array.isArray(response.data) || response.data.length === 0) {
+    if (!response.data || !Array.isArray(response.data.data) || response.data.data.length === 0) {
       console.warn("⚠️ ML response was empty or malformed");
       return res.status(204).send(); // No content
     }
 
-    console.log(`📊 ML returned ${response.data.length} trend items.`);
-    res.json({ version: "v1", data: response.data });
+    console.log(`📊 ML returned ${response.data.data.length} trend items.`);
+    res.json({ version: "v1", data: response.data.data });
 
   } catch (error) {
     console.error("❌ ML Progress fetch failed:", error?.response?.data || error.message);
